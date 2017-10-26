@@ -669,23 +669,6 @@ BOOL SendData(SOCKET sock, char* pSendBuf)
 	return TRUE;
 }
 
-BOOL SendClient_id2DisiServer(SOCKET sock, char* _pHostId)
-{
-	char* pTemp = "IAMPROXYBEGINhost_id=%sIAMPROXYEND";
-	char* pSendBuf = (char*)malloc(128);
-	sprintf_s(pSendBuf, 128, pTemp, _pHostId);
-
-	if (!SendData(sock, pSendBuf))
-	{
-		free(pSendBuf);
-		return FALSE;
-	}
-
-	free(pSendBuf);
-
-	return TRUE;
-}
-
 int RecvPortFromDisiServer(SOCKET sock, char** pInfo)
 {
 	int nRet = 0;
@@ -794,9 +777,9 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 
 	for (int i = 0; i < nCountOfArray;)
 	{
-		BOOL bConnect = ConnectToDisiServer(g_5001socket, vip[pArrayIndex[i]], 5001);
+		int nCode = ConnectToDisiServer(g_5001socket, vip[pArrayIndex[i]], 5001);
 
-		if (!bConnect)
+		if (0 != nCode)
 		{
 			if (++i == nCountOfArray)
 				goto error;
@@ -822,16 +805,21 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 			continue;
 		}
 
-		if (!SendClient_id2DisiServer(g_5001socket, g_pClient_id))
+		char* pTemp = "IAMPROXYBEGINhost_id=%sIAMPROXYEND";
+		char* pSendBuf = (char*)malloc(128);
+		sprintf_s(pSendBuf, 128, pTemp, g_pClient_id);
+		if (!SendData(g_5001socket, pSendBuf))
 		{
+			free(pSendBuf);
 			if (++i == nCountOfArray)
 				goto error;
 
 			continue;
 		}
+		free(pSendBuf);
 
 		char* pPortInfo = NULL;
-		int nCode = RecvPortFromDisiServer(g_5001socket, &pPortInfo);
+		nCode = RecvPortFromDisiServer(g_5001socket, &pPortInfo);
 		if (nCode != 0)
 		{
 			if (++i == nCountOfArray)
@@ -869,6 +857,7 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 		free(pPortInfo);
 
 		nIndex = i;
+		// 开始上报
 		break;
 	}
 
@@ -900,4 +889,116 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 error:
 	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return -1;
+}
+
+unsigned int _stdcall mode2_6086(LPVOID pVoid)
+{
+	int nTry = 0;
+	int nCode = 0;
+	int err = 0;
+	struct tcp_keepalive alive_in = { TRUE, 1000 * 60 * 2, 1000 * 5 };
+	struct tcp_keepalive alive_out = { 0 };
+	unsigned long ulBytesReturn = 0;
+
+	SOCKET g_6086socket = INVALID_SOCKET;
+	do
+	{
+		if (nTry > 5)
+			goto error;
+
+		nCode = ConnectToDisiServer(g_6086socket, vip[pArrayIndex[nIndex]], 6086);
+		if (0 == nCode)
+			break;
+		else if (1 == nCode)
+			goto error;
+		else
+			nTry++;
+	} while (true);
+
+	DWORD nTimeOut = 5 * 1000;
+	setsockopt(g_6086socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+
+	err = WSAIoctl(g_5001socket, SIO_KEEPALIVE_VALS,
+		&alive_in, sizeof(alive_in),
+		&alive_out, sizeof(alive_out),
+		&ulBytesReturn, NULL, NULL);
+
+	char* pTemp = "IAMPROXY6086BEGINhost_id=%sIAMPROXY6086END";
+	char* pSendBuf = (char*)malloc(128);
+	sprintf_s(pSendBuf, 128, pTemp, g_pClient_id);
+	if (!SendData(g_5001socket, pSendBuf))
+	{
+		free(pSendBuf);
+		goto error;
+	}
+	free(pSendBuf);
+
+	SetEvent(hReportStartEvent);
+	if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
+	{
+		printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
+		goto error;
+	}
+	printf("上报完成\n");
+
+	int nRecvLen = 0;
+	int nInfoTotalLen = 1024;
+	char* pRecv6086Info = (char*)malloc(1024);
+	memset(pRecv6086Info, 0x00, 1024);
+	do
+	{
+		if (nRecvLen >= nInfoTotalLen)
+		{
+			free(pRecv6086Info);
+			goto error;
+		}
+		err = recv(g_6086socket, pRecv6086Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
+		if (err > 0)
+			nRecvLen += err;
+		else
+		{
+			free(pRecv6086Info);
+			err = WSAGetLastError();
+			if (10053 == err || 10038 == err)
+				return 0;
+			else
+				goto error;
+		}
+		char* pHeader = NULL;
+		if ((pHeader = strstr(pRecv6086Info, "\r\n\r\n")) == NULL)
+			continue;
+		else
+		{
+			int HeaderLen = pHeader - pRecv6086Info;
+			HeaderLen += strlen("\r\n\r\n");
+			int len = strlen("Content-Length: ");
+			char* pContentLength = StrStrI(pRecv6086Info, "Content-Length: ");
+			if (NULL == pContentLength)
+			{
+				free(pRecv6086Info);
+				goto error;
+			}			
+			char* pContentLengthEnd = strstr(pContentLength, "\r\n");
+			if (NULL == pContentLengthEnd)
+			{
+				free(pRecv6086Info);
+				goto error;
+			}
+			int nLengthLen = pContentLengthEnd - pContentLength - len;
+			char Length[8] = { 0 };
+			memcpy_s(Length, 8, pContentLength + len, nLengthLen);
+			len = atoi(Length);
+			if ((HeaderLen + len) > nRecvLen)
+				continue;
+			else if ((HeaderLen + len) == nRecvLen)
+				break;
+		}
+	} while (TRUE);
+
+	printf("mode2 6086: %s\n", pRecv6086Info);
+	free(pRecv6086Info);
+
+error:
+	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+	return 0;
 }

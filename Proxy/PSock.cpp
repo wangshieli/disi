@@ -235,13 +235,13 @@ BOOL PostSend(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj)
 	return TRUE;
 }
 
-BOOL ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort)
+int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort)
 {
 	sock5001 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (INVALID_SOCKET == sock5001)
 	{
 		printf("sock5001初始化失败 error: %d\n", WSAGetLastError());
-		return FALSE;
+		return 1;
 	}
 
 	int nRet = 0,
@@ -250,7 +250,7 @@ BOOL ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short 
 	if (SOCKET_ERROR == nRet)
 	{
 		printf("设置sock5001 非阻塞模式失败 error: %d\n", WSAGetLastError());
-		return FALSE;
+		return 1;
 	}
 
 	struct sockaddr_in sockaddr5001;
@@ -271,7 +271,7 @@ BOOL ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short 
 		if (select(sock5001 + 1, NULL, &set, NULL, &tm) <= 0)
 		{
 			printf("sock5001 链接超时 error: %d\n", WSAGetLastError());
-			return FALSE;
+			return 2;
 		}
 		else
 		{
@@ -281,7 +281,7 @@ BOOL ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short 
 			if (0 != error)
 			{
 				printf("sock5001链接中出现的错误%d  error: %d\n", error, WSAGetLastError());
-				return FALSE;
+				return 1;
 			}
 		}
 	}
@@ -291,8 +291,8 @@ BOOL ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short 
 	if (SOCKET_ERROR == nRet)
 	{
 		printf("设置sock5001 阻塞模式失败 error: %d\n", WSAGetLastError());
-		return FALSE;
+		return 1;
 	}
 
-	return TRUE;
+	return 0;
 }
