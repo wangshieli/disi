@@ -30,3 +30,6 @@ void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj);
 
 void Recv6086RequestHeaderFailed(void* _c_sobj, void* _c_bobj);
 void Recv6086RequestHeaderSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj);
+
+void SERVER_ConnectServerFailed(void* _s_sobj, void* _s_bobj);
+void SERVER_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj);

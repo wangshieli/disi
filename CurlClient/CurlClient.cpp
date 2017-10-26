@@ -202,7 +202,7 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 			else// ģʽ2 sip
 			{
 				char* pDataTemp = "value={\"host_id\":\"%s\",\"ip\":null,\"sip\":\"%s\",\"port\":%s,\"u\":\"%s\",\"p\":\"%s\"}";
-				sprintf_s(PostData, pDataTemp, g_pClient_id, "sip", "port", g_username, g_password);
+				sprintf_s(PostData, pDataTemp, g_pClient_id, vip[pArrayIndex[nIndex]], szPort, g_username, g_password);
 			}
 			bSuccess = Curl_PostData2Server(URL_REPORTED_PROXY_HOST_INFO, PostData, pResponseData);
 			nAttempts += 1;

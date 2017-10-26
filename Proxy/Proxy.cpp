@@ -20,6 +20,8 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 LISTEN_OBJ* g_lobj = NULL;
 LISTEN_OBJ* g_lobj6086 = NULL;
 
+SOCKET g_5001socket = INVALID_SOCKET;
+
 #ifdef _DEBUG
 CRITICAL_SECTION g_csLog;
 #endif // _DEBUG
@@ -648,14 +650,250 @@ unsigned int _stdcall ontimer_thread(void* pVoid)
 	return 0;
 }
 
-unsigned int _stdcall mode2(LPVOID pVoid)
+BOOL SendData(SOCKET sock, char* pSendBuf)
 {
-	if (!GetServerIpFromHost())
+	int iRet = 0;
+	int nSendBufLen = strlen(pSendBuf);
+
+	int sendlen = 0;
+	while (sendlen < nSendBufLen)
 	{
-		goto error;
+		iRet = send(sock, pSendBuf + sendlen, nSendBufLen - sendlen, 0);
+		if (iRet == 0 || iRet == SOCKET_ERROR)
+		{
+			printf("send host_id to server time out wiht error code : %d", WSAGetLastError());
+			return FALSE;
+		}
+		sendlen += iRet;
+	}
+	return TRUE;
+}
+
+BOOL SendClient_id2DisiServer(SOCKET sock, char* _pHostId)
+{
+	char* pTemp = "IAMPROXYBEGINhost_id=%sIAMPROXYEND";
+	char* pSendBuf = (char*)malloc(128);
+	sprintf_s(pSendBuf, 128, pTemp, _pHostId);
+
+	if (!SendData(sock, pSendBuf))
+	{
+		free(pSendBuf);
+		return FALSE;
 	}
 
+	free(pSendBuf);
+
+	return TRUE;
+}
+
+int RecvPortFromDisiServer(SOCKET sock, char** pInfo)
+{
+	int nRet = 0;
+	unsigned long WaitBytes = 0;
+	char* pRecvBuf = (char*)malloc(128);
+	memset(pRecvBuf, 0x00, 128);
+
+	WaitBytes = 0;
+	int RecvLen = 0;
+	nRet = recv(sock, pRecvBuf, WaitBytes, 0);
+	if (SOCKET_ERROR != nRet && 0 != nRet)
+	{
+		RecvLen += nRet;
+		while (RecvLen < (int)WaitBytes)
+		{
+			nRet = recv(sock, pRecvBuf + RecvLen, WaitBytes - RecvLen, 0);
+			if (SOCKET_ERROR == nRet || 0 == nRet)
+			{
+				free(pRecvBuf);
+				int err = WSAGetLastError();
+				printf("RecvPortFromDisiServer error: %d\n", err);
+				if (10054 == err || 10060 == err)
+					return 2;
+
+				return 1;
+			}
+			RecvLen += nRet;
+		}
+
+		int nMsgLen = pRecvBuf[0] * 256 + pRecvBuf[1];
+		if (nMsgLen <= 0 || nMsgLen > 256)
+		{
+			delete pRecvBuf;
+			return 2;
+		}
+		if (nMsgLen > 128)
+		{
+			free(pRecvBuf);
+			int nByteSize = MY_ALIGN(nMsgLen + 1, 8);
+			pRecvBuf = (char*)malloc(nByteSize);
+			memset(pRecvBuf, 0x00, nByteSize);
+		}
+		RecvLen = 0;
+		while (RecvLen < nMsgLen)
+		{
+			nRet = recv(sock, pRecvBuf + RecvLen, nMsgLen - RecvLen, 0);
+			if (SOCKET_ERROR == nRet || 0 == nRet)
+			{
+				free(pRecvBuf);
+				int err = WSAGetLastError();
+				printf("RecvPortFromDisiServer error: %d\n", err);
+				if (10054 == err || 10060 == err)
+					return 2;
+
+				return 1;
+			}
+			RecvLen += nRet;
+		}
+		*pInfo = pRecvBuf;
+	}
+	else
+	{
+		free(pRecvBuf);
+		int err = WSAGetLastError();
+		printf("RecvPortFromDisiServer error: %d\n", err);
+		if (10054 == err || 10060 == err)
+			return 2;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+int AanlyzePortFromInfo(char* pPortInfo)
+{
+	int nPort = 0;
+	char* pBegin = strstr(pPortInfo, "post=");
+	if (NULL == pBegin)
+		return nPort;
+
+	char* pEnd = strstr(pBegin, "IAMNEWPORTEND");
+	if (NULL == pEnd)
+		return nPort;
+
+	int portlen = pEnd - pBegin - strlen("post=");
+	int nByteSize = MY_ALIGN(portlen + 1, 8);
+	char* pNewPort = (char*)malloc(nByteSize);
+	memset(pNewPort, 0x00, nByteSize);
+	memcpy(pNewPort, pBegin + strlen("post="), portlen);
+
+	nPort = atoi(pNewPort);
+	free(pNewPort);
+
+	return nPort;
+}
+
+unsigned int _stdcall mode2(LPVOID pVoid)
+{
+	int err = 0;
+
+	if (!GetServerIpFromHost())
+		goto error;
+
 	GetRandIndex(pArrayIndex, nCountOfArray);
+
+	for (int i = 0; i < nCountOfArray;)
+	{
+		BOOL bConnect = ConnectToDisiServer(g_5001socket, vip[pArrayIndex[i]], 5001);
+
+		if (!bConnect)
+		{
+			if (++i == nCountOfArray)
+				goto error;
+
+			continue;
+		}
+
+		DWORD nTimeOut = 5 * 1000;
+		setsockopt(g_5001socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+
+		struct tcp_keepalive alive_in = { TRUE, 1000 * 60 * 2, 1000 * 5};
+		struct tcp_keepalive alive_out = { 0 };
+		unsigned long ulBytesReturn = 0;
+		err = WSAIoctl(g_5001socket, SIO_KEEPALIVE_VALS,
+			&alive_in, sizeof(alive_in),
+			&alive_out, sizeof(alive_out),
+			&ulBytesReturn, NULL, NULL);
+		if (SOCKET_ERROR == err)
+		{
+			if (++i == nCountOfArray)
+				goto error;
+			
+			continue;
+		}
+
+		if (!SendClient_id2DisiServer(g_5001socket, g_pClient_id))
+		{
+			if (++i == nCountOfArray)
+				goto error;
+
+			continue;
+		}
+
+		char* pPortInfo = NULL;
+		int nCode = RecvPortFromDisiServer(g_5001socket, &pPortInfo);
+		if (nCode != 0)
+		{
+			if (++i == nCountOfArray)
+				goto error;
+			
+			continue;
+		}
+
+		if (NULL == pPortInfo)
+		{
+			printf("Recv PORT info error");
+			goto error;
+		}
+
+		if (strstr(pPortInfo, "-Proxy5001IsRead") == NULL)
+		{
+			free(pPortInfo);
+			if (++i == nCountOfArray)
+				goto error;
+
+			continue;
+		}
+
+		printf("DISI_SERVER ¶Ë¿ÚÐÅÏ¢: %s\n", pPortInfo);
+		g_nPort = AanlyzePortFromInfo(pPortInfo);
+		if (0 == g_nPort)
+		{
+			free(pPortInfo);
+			if (++i == nCountOfArray)
+				goto error;
+
+			continue;
+		}
+
+		free(pPortInfo);
+
+		nIndex = i;
+		break;
+	}
+
+	while (true)
+	{
+		char* pPortInfo = NULL;
+		int nCode = RecvPortFromDisiServer(g_5001socket, &pPortInfo);
+		if (nCode == 1)
+			goto error;
+		else if (nCode == 2)
+			return 0;
+
+		if (NULL == pPortInfo)
+		{
+			printf("Recv disi PORT info error");
+			goto error;
+		}
+
+		int nPort = AanlyzePortFromInfo(pPortInfo);
+		free(pPortInfo);
+		if (0 == nPort)
+			continue;
+
+		Server_CONNECT(nPort);
+	}
 
 	return 0;
 

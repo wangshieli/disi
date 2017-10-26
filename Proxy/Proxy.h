@@ -147,3 +147,5 @@ extern DWORD g_dwListenPortCount;
 
 extern LISTEN_OBJ* g_lobj;
 extern LISTEN_OBJ* g_lobj6086;
+
+extern SOCKET g_5001socket;

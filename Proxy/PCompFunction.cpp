@@ -909,3 +909,125 @@ error:
 	freeSObj(c_sobj);
 	freeBObj(c_bobj);
 }
+
+void Server_CONNECT(u_short nPort)
+{
+	SOCKET_OBJ* s_sobj = NULL;
+	BUFFER_OBJ* s_bobj = NULL;
+	ADDRINFOT hints, *sAddrInfo = NULL;
+	
+	int err = 0;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = 0;
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+#ifdef PROXY_DEBUG
+	err = GetAddrInfo("127.0.0.1", "5001", &hints, &sAddrInfo);
+#else
+	char szPort[8] = { 0 };
+	_itoa_s(nPort, szPort, 10);
+	err = GetAddrInfo(vip[pArrayIndex[nIndex]], szPort, &hints, &sAddrInfo);
+#endif // PROXY_DEBUG
+	if (0 != err)
+		goto error;
+
+	s_sobj = allocSObj();
+	if (NULL == s_sobj)
+		goto error;
+
+	s_bobj = allocBObj(g_dwPageSize);
+	if (NULL == s_bobj)
+		goto error;
+
+	s_sobj->pRelatedBObj = s_bobj;
+	s_bobj->pRelatedSObj = s_sobj;
+
+	s_sobj->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (INVALID_SOCKET == s_sobj->sock)
+		goto error;
+
+	struct sockaddr_in taddr;
+	taddr.sin_family = AF_INET;
+	taddr.sin_port = htons(0);
+	taddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (SOCKET_ERROR == bind(s_sobj->sock, (sockaddr*)&taddr, sizeof(taddr)))
+		goto error;
+
+	if (!BindSObjWithCompPort(s_sobj))
+		goto error;
+
+	s_bobj->SetIoRequestFunction(SERVER_ConnectServerFailed, SERVER_ConnectServerSuccess);
+	s_sobj->sAddrInfo = sAddrInfo;
+	DWORD dwBytes = 0;
+	if (!lpfnConnectEx(s_sobj->sock, (sockaddr*)sAddrInfo->ai_addr, sAddrInfo->ai_addrlen, NULL, 0, &dwBytes, &s_bobj->ol))
+	{
+		if (WSA_IO_PENDING != WSAGetLastError())
+			goto error;
+	}
+
+	return;
+
+error:
+	if (NULL != sAddrInfo)
+		FreeAddrInfo(sAddrInfo);
+
+	if (NULL != s_sobj)
+	{
+		if (INVALID_SOCKET != s_sobj->sock)
+			PCloseSocket(s_sobj);
+		freeSObj(s_sobj);
+	}
+	if (NULL != s_bobj)
+		freeBObj(s_bobj);
+	return;
+}
+
+void SERVER_ConnectServerFailed(void* _s_sobj, void* _s_bobj)
+{
+	SOCKET_OBJ* s_sobj = (SOCKET_OBJ*)_s_sobj;
+	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
+
+	FreeAddrInfo(s_sobj->sAddrInfo);
+
+	PCloseSocket(s_sobj);
+	freeSObj(s_sobj);
+	freeBObj(s_bobj);
+}
+
+void SERVER_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
+{
+	SOCKET_OBJ* s_sobj = (SOCKET_OBJ*)_s_sobj;
+	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
+
+	FreeAddrInfo(s_sobj->sAddrInfo);
+
+	int nSeconds,
+		nBytes = sizeof(nSeconds),
+		nErr = 0;
+
+	nErr = getsockopt(s_sobj->sock, SOL_SOCKET, SO_CONNECT_TIME, (char*)&nSeconds, &nBytes);
+	if (SOCKET_ERROR == nErr)
+		goto error;
+
+	if (0xffffffff == nSeconds)
+		goto error;
+
+	s_bobj->dwRecvedCount = 0;
+	s_bobj->dwSendedCount = 0;
+	s_bobj->SetIoRequestFunction(RecvRequestHeaderFailed, RecvRequestHeaderSuccess);
+	if (!PostRecv(s_sobj,s_bobj))
+	{
+		printf("SERVER_ConnectServerSuccess PostRecv failed error: %d\n", WSAGetLastError());
+		goto error;
+	}
+
+	return;
+
+error:
+	PCloseSocket(s_sobj);
+	freeSObj(s_sobj);
+	freeBObj(s_bobj);
+	return;
+}
