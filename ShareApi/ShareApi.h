@@ -31,7 +31,7 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 0
+#define PROXY_TEST 1
 
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
@@ -75,6 +75,11 @@ int GetListenPort();
 
 BOOL GetServerIpFromHost();
 
+BOOL ComputerRestart();
+
+BOOL ProxyRestart();
+
+extern HANDLE hTheOneInstance;
 extern char g_username[];
 extern char g_password[];
 extern HANDLE g_hDoingNetWork;

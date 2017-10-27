@@ -289,7 +289,7 @@ void AcceptCompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 		goto error;
 	}
 
-	setsockopt(c_sobj->sock, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&lobj->sListenSock, sizeof(lobj->sListenSock));
+//	setsockopt(c_sobj->sock, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&lobj->sListenSock, sizeof(lobj->sListenSock));
 
 	c_bobj->dwRecvedCount += dwTranstion;
 
@@ -419,6 +419,8 @@ void CONNECT_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bob
 	if (0xffffffff == nSeconds)
 		goto error;
 
+//	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+
 	const char pResponse[] = "HTTP/1.0 200 Connection established\r\nProxy-agent: HTTP Proxy Lite /0.2\r\n\r\n";
 	strcpy_s(c_bobj->data, c_bobj->datalen, pResponse);
 	c_bobj->dwRecvedCount = strlen(pResponse);
@@ -519,8 +521,8 @@ void RecvCompFailed(void* _sobj, void* _bobj)
 		printf("RecvCompFailed error: %d\n", WSAGetLastError());
 #endif // _DEBUG
 
-//	shutdown(pCurrentSObj->sock, SD_BOTH);
-	shutdown(pPairedSObj->sock, SD_BOTH);
+	//shutdown(pCurrentSObj->sock, SD_BOTH);
+	//shutdown(pPairedSObj->sock, SD_BOTH);
 
 	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
 	{
@@ -579,8 +581,8 @@ void SendCompFailed(void* _sobj, void* _bobj)
 		printf("RecvCompFailed error: %d\n", WSAGetLastError());
 #endif // _DEBUG
 
-//	shutdown(pCurrentSObj->sock, SD_BOTH);
-	shutdown(pPairedSObj->sock, SD_BOTH);
+	//shutdown(pCurrentSObj->sock, SD_BOTH);
+	//shutdown(pPairedSObj->sock, SD_BOTH);
 
 	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
 	{
@@ -668,6 +670,8 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 
 	FreeAddrInfo(s_sobj->sAddrInfo);
 
+//	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+
 	s_bobj->dwSendedCount += dwTranstion;
 	if (c_bobj->dwSendedCount < c_bobj->dwRecvedCount)
 	{
@@ -748,7 +752,7 @@ void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 		goto error;
 	}
 
-	setsockopt(c_sobj->sock, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&lobj->sListenSock, sizeof(lobj->sListenSock));
+//	setsockopt(c_sobj->sock, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&lobj->sListenSock, sizeof(lobj->sListenSock));
 
 	c_bobj->dwRecvedCount += dwTranstion;
 
@@ -1017,6 +1021,8 @@ void SERVER_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj
 
 	if (0xffffffff == nSeconds)
 		goto error;
+
+//	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 
 	s_bobj->dwRecvedCount = 0;
 	s_bobj->dwSendedCount = 0;

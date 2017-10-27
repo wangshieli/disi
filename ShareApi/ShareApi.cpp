@@ -1,5 +1,6 @@
 #include "ShareApi.h"
 
+HANDLE hTheOneInstance = NULL;
 char g_username[16];
 char g_password[16];
 HANDLE g_hDoingNetWork = NULL;
@@ -615,6 +616,62 @@ BOOL GetServerIpFromHost()
 		printf("ipË÷Òý·ÖÅäÊ§°Ü\n");
 		return FALSE;
 	}
+
+	return TRUE;
+}
+
+BOOL ComputerRestart()
+{
+	HANDLE hToken;
+	TOKEN_PRIVILEGES tkp;
+
+	if (OpenProcessToken(GetCurrentProcess(),
+		TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+		return FALSE;
+
+	LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
+
+	tkp.PrivilegeCount = 1;
+	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+	AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+	if (ERROR_SUCCESS != GetLastError())
+		return FALSE;
+
+	//if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE,
+	//	SHTDN_REASON_MAJOR_OPERATINGSYSTEM |
+	//	SHTDN_REASON_MINOR_UPGRADE |
+	//	SHTDN_REASON_FLAG_PLANNED))
+	//	return FALSE;
+
+	if (!ExitWindowsEx(EWX_REBOOT, 0))
+		return FALSE;
+
+	return TRUE;
+}
+
+BOOL ProxyRestart()
+{
+	HKEY hKey;
+	char proxy_path[MAX_PATH];
+	DWORD path_len = MAX_PATH;
+	if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Proxy",
+		0, KEY_ALL_ACCESS, &hKey))
+		return FALSE;
+
+	if (ERROR_SUCCESS != RegQueryValueEx(hKey, "proxy_path", NULL,
+		NULL, (LPBYTE)proxy_path, &path_len))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+	if (NULL != hTheOneInstance)
+		CloseHandle(hTheOneInstance);
+
+	ShellExecute(0, "open", proxy_path, NULL, NULL, SW_SHOWNORMAL);
+	ExitProcess(0);
 
 	return TRUE;
 }

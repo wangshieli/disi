@@ -132,8 +132,9 @@ int main()
 #ifndef PROXY_DEBUG
 	if (!GetAdslInfo(g_AdslIp))
 		DoAdsl();
-#endif // PROXY_DEBUG
+
 	ontimer_checkversion(NULL, 0, 0, 0);
+#endif // PROXY_DEBUG
 
 	g_hSwitchThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == g_hSwitchThreadStart)
@@ -295,8 +296,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			GetUsernameAndPassword();
 
 #ifdef PROXY_DEBUG
-			bSwithMode1 = FALSE;
-			PostThreadMessage(g_switch_threadId, SWITCH_MODE2, 0, 0);
+			bSwithMode1 = TRUE;
+			PostThreadMessage(g_switch_threadId, SWITCH_MODE1, 0, 0);
 #else
 			if (CheckReservedIp(g_AdslIp))// ÄÚÍøip
 			{
@@ -566,6 +567,10 @@ BOOL Proxy(cJSON** pAppInfo)
 
 void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
+#ifdef PROXY_DEBUG
+	return;
+#endif // PROXY_DEBUG
+
 	if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
 		return;
 	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
