@@ -31,7 +31,7 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 1
+#define PROXY_TEST 0
 
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
@@ -42,6 +42,8 @@ using namespace std;
 #endif
 
 #define MY_ALIGN(size, boundary) (((size) + ((boundary) - 1 )) & ~((boundary) - 1))
+
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event"
 
 BOOL ExcCmd(const char* cmd, char** out);
 

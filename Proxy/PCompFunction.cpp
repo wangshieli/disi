@@ -141,32 +141,37 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 		UrlPort[nPortLen] = '\0';
 	}
 
-	//char* pHttp = strstr(pUrlEnd, " HTTP/1.1\r\n");
-	//if (NULL == pHttp)
-	//	goto error;
-	//pHttp[8] = '0';
-
-	//int l1 =  c_bobj->dwRecvedCount - (pUrlEnd - c_bobj->data);
-	//memcpy(c_bobj->data + nLen, pUrlEnd, l1);
-	//c_bobj->dwRecvedCount = nLen + l1;
-
 	char* pProxy_Connection = StrStrI(pUrlEnd, "Proxy-Connection:");
 	if (NULL == pProxy_Connection)
-		goto error;
-	char* pProxy_ConnectionEnd = strstr(pProxy_Connection, "\r\n");
-	if (NULL == pProxy_ConnectionEnd)
-		goto error;
-	int nBeforePrxoy_ConnectionLen = pProxy_Connection - pUrlEnd;
-	int nAfterPrxoy_ConnectionEndLen = c_bobj->dwRecvedCount - (pProxy_ConnectionEnd - c_bobj->data);
-	int nNewConnectionLne = strlen("Connection: close");
+		pProxy_Connection = StrStrI(pUrlEnd, "Connection:");
+	if (NULL != pProxy_Connection)
+	{
+		char* pProxy_ConnectionEnd = strstr(pProxy_Connection, "\r\n");
+		if (NULL == pProxy_ConnectionEnd)
+			goto error;
+		int nBeforePrxoy_ConnectionLen = pProxy_Connection - pUrlEnd;
+		int nAfterPrxoy_ConnectionEndLen = c_bobj->dwRecvedCount - (pProxy_ConnectionEnd - c_bobj->data);
+		int nNewConnectionLne = strlen("Connection: close");
 
-	memcpy(c_bobj->data + nLen, pUrlEnd, nBeforePrxoy_ConnectionLen);
-	nLen += nBeforePrxoy_ConnectionLen;
-	memcpy(c_bobj->data + nLen, "Connection: close", nNewConnectionLne);
-	nLen += nNewConnectionLne;
-	memcpy(c_bobj->data + nLen, pProxy_ConnectionEnd, nAfterPrxoy_ConnectionEndLen);
-	nLen += nAfterPrxoy_ConnectionEndLen;
-	c_bobj->dwRecvedCount = nLen;
+		memcpy(c_bobj->data + nLen, pUrlEnd, nBeforePrxoy_ConnectionLen);
+		nLen += nBeforePrxoy_ConnectionLen;
+		memcpy(c_bobj->data + nLen, "Connection: close", nNewConnectionLne);
+		nLen += nNewConnectionLne;
+		memcpy(c_bobj->data + nLen, pProxy_ConnectionEnd, nAfterPrxoy_ConnectionEndLen);
+		nLen += nAfterPrxoy_ConnectionEndLen;
+		c_bobj->dwRecvedCount = nLen;
+	}
+	else
+	{
+		char* pHttp = strstr(pUrlEnd, " HTTP/1.1\r\n");
+		if (NULL == pHttp)
+			goto error;
+		pHttp[8] = '0';
+
+		int l1 =  c_bobj->dwRecvedCount - (pUrlEnd - c_bobj->data);
+		memcpy(c_bobj->data + nLen, pUrlEnd, l1);
+		c_bobj->dwRecvedCount = nLen + l1;
+	}
 
 	int err = 0;
 	memset(&hints, 0, sizeof(hints));

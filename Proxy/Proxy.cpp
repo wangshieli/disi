@@ -23,6 +23,7 @@ LISTEN_OBJ* g_lobj6086 = NULL;
 
 SOCKET g_5001socket = INVALID_SOCKET;
 SOCKET g_6086socket = INVALID_SOCKET;
+SOCKET g_6085socket = INVALID_SOCKET;
 
 HANDLE g_hMode2ThreadStart = NULL;
 
@@ -32,6 +33,20 @@ CRITICAL_SECTION g_csLog;
 
 int main()
 {
+	hTheOneInstance = ::OpenEvent(EVENT_ALL_ACCESS, FALSE, NP_THE_ONE_INSTANCE);
+	if (NULL != hTheOneInstance)
+	{
+		printf("已经有正在运行的代理，请不要重复打开代理\n");
+		Sleep(1000 * 20);
+		return 0;
+	}
+	hTheOneInstance = ::CreateEvent(NULL, FALSE, FALSE, NP_THE_ONE_INSTANCE);
+	if (NULL == hTheOneInstance)
+	{
+		printf("代理启动失败\n");
+		Sleep(1000 * 5);
+		return 0;
+	}
 	printf("Current Version: %s\n", PROXY_VERSION);
 	SOCKET sListen = INVALID_SOCKET;
 
@@ -221,9 +236,6 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 		{
 		case SWITCH_REDIAL:
 		{
-			//if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
-			//	break;
-
 			if (NULL != g_lobj)
 			{
 				closesocket(g_lobj->sListenSock);
@@ -376,7 +388,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 		goto error;
 	}
 
-	for (size_t i = 0; i < 10; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		PostAcceptEx(g_lobj6086, 1);
 	}
@@ -1037,6 +1049,20 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 
 	printf("mode2 6086: %s\n", pRecv6086Info);
 	free(pRecv6086Info);
+
+error:
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
+	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+	return 0;
+}
+
+unsigned int _stdcall mode2_6085(LPVOID pVoid)
+{
+	g_6085socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (INVALID_SOCKET == g_6085socket)
+		goto error;
+
+	return 0;
 
 error:
 	WaitForSingleObject(g_hDoingNetWork, INFINITE);
