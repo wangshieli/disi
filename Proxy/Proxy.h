@@ -149,3 +149,4 @@ extern LISTEN_OBJ* g_lobj;
 extern LISTEN_OBJ* g_lobj6086;
 
 extern SOCKET g_5001socket;
+extern SOCKET g_6086socket;

@@ -579,7 +579,7 @@ void SendCompFailed(void* _sobj, void* _bobj)
 		printf("RecvCompFailed error: %d\n", WSAGetLastError());
 #endif // _DEBUG
 
-	// shutdown(pCurrentSObj->sock, SD_BOTH);
+//	shutdown(pCurrentSObj->sock, SD_BOTH);
 	shutdown(pPairedSObj->sock, SD_BOTH);
 
 	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
@@ -812,6 +812,8 @@ void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 			PCloseSocket(c_sobj);
 			freeSObj(c_sobj);
 			freeBObj(c_bobj);
+			closesocket(g_lobj6086->sListenSock);
+			WaitForSingleObject(g_hDoingNetWork, INFINITE);
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
 			printf("ok\n");
 		}
@@ -895,6 +897,8 @@ void Recv6086RequestHeaderSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bob
 			PCloseSocket(c_sobj);
 			freeSObj(c_sobj);
 			freeBObj(c_bobj);
+			closesocket(g_lobj6086->sListenSock);
+			WaitForSingleObject(g_hDoingNetWork, INFINITE);
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
 			printf("ok\n");
 		}

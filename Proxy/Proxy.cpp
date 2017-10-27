@@ -10,6 +10,7 @@ DWORD g_dwPageSize = 0;
 unsigned int _stdcall completionRoution(LPVOID);
 unsigned int _stdcall mode1(LPVOID pVoid);
 unsigned int _stdcall mode2(LPVOID pVoid);
+unsigned int _stdcall mode2_6086(LPVOID pVoid);
 
 unsigned int _stdcall switch_thread(LPVOID pVoid);
 
@@ -21,6 +22,9 @@ LISTEN_OBJ* g_lobj = NULL;
 LISTEN_OBJ* g_lobj6086 = NULL;
 
 SOCKET g_5001socket = INVALID_SOCKET;
+SOCKET g_6086socket = INVALID_SOCKET;
+
+HANDLE g_hMode2ThreadStart = NULL;
 
 #ifdef _DEBUG
 CRITICAL_SECTION g_csLog;
@@ -74,6 +78,8 @@ int main()
 	InitializeCriticalSection(&g_csSObj);
 	InitializeCriticalSection(&g_csBObj);
 
+	g_hMode2ThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+
 #ifdef _DEBUG
 	InitializeCriticalSection(&g_csLog);
 #endif // _DEBUG
@@ -124,9 +130,10 @@ int main()
 	printf("report_thread 启动完成\n");
 
 #ifndef PROXY_DEBUG
-	if (DoAdsl())
+	if (!GetAdslInfo(g_AdslIp))
+		DoAdsl();
 #endif // PROXY_DEBUG
-		ontimer_checkversion(NULL, 0, 0, 0);
+	ontimer_checkversion(NULL, 0, 0, 0);
 
 	g_hSwitchThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == g_hSwitchThreadStart)
@@ -145,6 +152,7 @@ int main()
 		printf("WaitForSingleObject g_hSwitchThreadStart error: %d\n", GetLastError());
 		goto error;
 	}
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
 	if (!PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0))
 	{
 		printf("PostThreadMessage error: %d\n", GetLastError());
@@ -203,6 +211,7 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 	SetEvent(g_hSwitchThreadStart);
 
 	HANDLE hModeThread = NULL;
+	HANDLE h6086Thread = NULL;
 	unsigned int nModeThreadId = 0;
 
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -211,8 +220,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 		{
 		case SWITCH_REDIAL:
 		{
-			if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
-				break;
+			//if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+			//	break;
 
 			if (NULL != g_lobj)
 			{
@@ -237,12 +246,31 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 				g_lobj6086 = NULL;
 			}
 
+			if (INVALID_SOCKET != g_5001socket)
+			{
+				closesocket(g_5001socket);
+				g_5001socket = INVALID_SOCKET;
+			}
+			if (INVALID_SOCKET != g_6086socket)
+			{
+				closesocket(g_6086socket);
+				g_6086socket = INVALID_SOCKET;
+			}
+
 			if (NULL != hModeThread)
 			{
 				TerminateThread(hModeThread, 0);
 				WaitForSingleObject(hModeThread, INFINITE);
 				CloseHandle(hModeThread);
 				hModeThread = NULL;
+			}
+
+			if (NULL != h6086Thread)
+			{
+				TerminateThread(h6086Thread, 0);
+				WaitForSingleObject(h6086Thread, INFINITE);
+				CloseHandle(h6086Thread);
+				h6086Thread = NULL;
 			}
 
 			printf("线程关闭完成\n");
@@ -259,11 +287,16 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			printf("拨号完成\n");
 			SetEvent(g_hDoingNetWork);
 
+			while (PeekMessage(&msg, NULL, SWITCH_REDIAL, SWITCH_REDIAL, PM_REMOVE))
+			{
+				printf("清空 SWITCH_REDIAL 消息\n");
+			}
+
 			GetUsernameAndPassword();
 
 #ifdef PROXY_DEBUG
-			bSwithMode1 = TRUE;
-			PostThreadMessage(g_switch_threadId, SWITCH_MODE1, 0, 0);
+			bSwithMode1 = FALSE;
+			PostThreadMessage(g_switch_threadId, SWITCH_MODE2, 0, 0);
 #else
 			if (CheckReservedIp(g_AdslIp))// 内网ip
 			{
@@ -295,6 +328,13 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			if (NULL == hModeThread)
 			{
 				printf("启动 mode2 失败\n");
+				break;
+			}
+			WaitForSingleObject(g_hMode2ThreadStart, INFINITE);
+			h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_6086, NULL, 0, NULL);
+			if (NULL == h6086Thread)
+			{
+				printf("启动 mode2_6086 失败\n");
 			}
 		}
 		break;
@@ -414,6 +454,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 
 error:
 	printf("error\n");
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
 	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return -1;
 }
@@ -797,13 +838,6 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 			&alive_in, sizeof(alive_in),
 			&alive_out, sizeof(alive_out),
 			&ulBytesReturn, NULL, NULL);
-		if (SOCKET_ERROR == err)
-		{
-			if (++i == nCountOfArray)
-				goto error;
-			
-			continue;
-		}
 
 		char* pTemp = "IAMPROXYBEGINhost_id=%sIAMPROXYEND";
 		char* pSendBuf = (char*)malloc(128);
@@ -857,9 +891,10 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 		free(pPortInfo);
 
 		nIndex = i;
-		// 开始上报
 		break;
 	}
+
+	SetEvent(g_hMode2ThreadStart);
 
 	while (true)
 	{
@@ -887,6 +922,7 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 	return 0;
 
 error:
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
 	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return -1;
 }
@@ -900,7 +936,6 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	struct tcp_keepalive alive_out = { 0 };
 	unsigned long ulBytesReturn = 0;
 
-	SOCKET g_6086socket = INVALID_SOCKET;
 	do
 	{
 		if (nTry > 5)
@@ -999,6 +1034,7 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	free(pRecv6086Info);
 
 error:
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
 	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return 0;
 }

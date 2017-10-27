@@ -256,7 +256,11 @@ int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short S
 	struct sockaddr_in sockaddr5001;
 	sockaddr5001.sin_family = AF_INET;
 	sockaddr5001.sin_port = ntohs(ServerPort);
+#ifdef PROXY_DEBUG
+	sockaddr5001.sin_addr.s_addr = inet_addr("127.0.0.1");
+#else
 	sockaddr5001.sin_addr.s_addr = inet_addr(ServerIP);
+#endif // PROXY_DEBUG
 	
 	nRet = connect(sock5001, (const sockaddr*)&sockaddr5001, sizeof(sockaddr5001));
 	if (SOCKET_ERROR == nRet)
