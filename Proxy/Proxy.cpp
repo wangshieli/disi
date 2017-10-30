@@ -152,6 +152,7 @@ int main()
 	ontimer_checkversion(NULL, 0, 0, 0);
 #endif // PROXY_DEBUG
 
+	HANDLE hLogThread = (HANDLE)_beginthreadex(NULL, 0, log_thread, NULL, 0, &g_log_thread_id);
 	HANDLE h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode_6085, NULL, 0, NULL);
 
 	g_hSwitchThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -434,7 +435,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 				PostAcceptEx(LSock_Array[i], i);
 			}
 
-			if (LSock_Array[i]->dwAcceptExPendingCount > 10 * 10)
+			if (LSock_Array[i]->dwAcceptExPendingCount > 30)
 			{
 				vFreeBuffer.clear();
 				int optlen,
@@ -450,8 +451,11 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 						printf("getsockopt SO_CONNECT_TIME error: %d\n", WSAGetLastError());
 					else
 					{
-						if (optval != 0xffffffff && optval > 30)
+						if (optval != 0xffffffff && optval > 10 && bobj->dwSendedCount == 0)
+						{
+							bobj->dwSendedCount = 1;
 							vFreeBuffer.push_back(bobj);
+						}
 					}
 
 					bobj = bobj->pNext;

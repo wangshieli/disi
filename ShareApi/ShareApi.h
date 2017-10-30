@@ -33,11 +33,13 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 1
+#define PROXY_TEST 0
 
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
 #define SWITCH_REDIAL	WM_USER + 3
+
+#define LOG_MESSAGE		WM_USER + 4
 
 #if PROXY_TEST
 #define PROXY_DEBUG
@@ -85,6 +87,10 @@ BOOL ProxyRestart();
 
 int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort);
 
+unsigned int _stdcall log_thread(LPVOID);
+
+ADDRINFOT* ResolveIp(const char* _host, const char* _port);
+
 extern HANDLE hTheOneInstance;
 extern char g_username[];
 extern char g_password[];
@@ -99,3 +105,4 @@ extern int nIndex;
 extern int nCountOfArray;
 extern int *pArrayIndex;
 extern vector<char*> vip;
+extern unsigned int g_log_thread_id;

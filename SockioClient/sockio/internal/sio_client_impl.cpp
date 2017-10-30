@@ -380,6 +380,7 @@ namespace sio
 
 		if (m_reconn_made % 4 == 0)
 		{
+			printf("ÇÐ»»Ä£Ê½\n");
 			PostThreadMessage(g_client_thread_id, CLIENT_RELINK, NULL, NULL);
 			return;
 		}
