@@ -21,6 +21,6 @@ BOOL PostRecv(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj);
 
 BOOL PostSend(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj);
 
-int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort);
+//int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort);
 
 void Server_CONNECT(u_short nPort);

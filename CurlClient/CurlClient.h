@@ -5,7 +5,7 @@
 #define URL_GET_PROXY_VERSION_INFO	"https://wwwphpapi-0.disi.se/v1/extension/versions?app_secret=F$~((kb~AjO*xgn~&codes=app-proxy,proxy-monitor,app-upgrade&host_id=%s"
 #define	URL_GET_CTX_VERSION_INFO	"https://wwwphpapi-0.disi.se/v1/extension/versions?app_secret=F$~((kb~AjO*xgn~&codes=edffiillgkekafkdjahahdjhjffllgjg,npogbneglgfmgafpepecdconkgapppkd&host_id=%s"
 
-#define URL_DOWNLOAD_CHROME	"http://chex.oss-cn-shanghai.aliyuncs.com/a/b46.0.zip"
+#define URL_DOWNLOAD_CHROME	"http://chex.oss-cn-shanghai.aliyuncs.com/a/chrome-bin.zip"
 #define URL_DOWNLOAD_USERDATA "http://chex.oss-cn-shanghai.aliyuncs.com/a/userdata.zip"
 
 struct CurlResponseData
@@ -28,8 +28,14 @@ BOOL Curl_PostData2Server(const char* url, const char* pData, struct CurlRespons
 size_t CWFunc_DownloadFile(void* pInfo, size_t size, size_t nmemb, void* pFile);
 BOOL Curl_DownloadFile(const char* url, const char* downPath);
 
+unsigned int _stdcall report_thread(LPVOID pVoid);
+
+BOOL CheckIsNetWorking();
+
+#ifdef USE_INSTALL_CHROME
+BOOL InstallChrome();
+#endif
+
 extern HANDLE hReportStartEvent;
 extern HANDLE hReportCompEvent;
 extern HANDLE hReportThreadStart;
-
-unsigned int _stdcall report_thread(LPVOID pVoid);

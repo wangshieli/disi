@@ -40,7 +40,21 @@ int main(int argc, char* argv[])
 			ModifyDnsServer(argv[2], argv[3]);
 		}
 
-		// 向6086发送拨号请求
+		// 向6085发送拨号请求
+		SOCKET sock = INVALID_SOCKET;
+		int err = ConnectToDisiServer(sock, "127.0.0.1", 6085);
+		if (0 != err)
+		{
+			printf("连接6085端口失败\n");
+		}
+		DWORD nTimeOut = 5 * 1000;
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+		setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+		const char* pSend = "GET /change HTTP/1.1\r\n\r\n";
+		send(sock, pSend, strlen(pSend), 0);
+		char retBuff[256] = { 0 };
+		recv(sock, retBuff, 256, 0);
+		closesocket(sock);
 	}
 	else if (strcmp(argv[1], "chrome_reinstall") == 0)
 	{

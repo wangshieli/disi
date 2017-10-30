@@ -16,6 +16,8 @@
 #include <atlconv.h>
 #include <Shlwapi.h>
 
+#include <GPEdit.h>
+
 #include <CommCtrl.h>
 
 #include <string>
@@ -31,7 +33,7 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 0
+#define PROXY_TEST 1
 
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
@@ -80,6 +82,8 @@ BOOL GetServerIpFromHost();
 BOOL ComputerRestart();
 
 BOOL ProxyRestart();
+
+int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort);
 
 extern HANDLE hTheOneInstance;
 extern char g_username[];

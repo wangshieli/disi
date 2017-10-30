@@ -196,7 +196,9 @@ wchar_t* ConvertUtf8ToUnicode_(const char* utf8)
 	}
 	int nLen = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, (LPCSTR)utf8, -1, NULL, 0);
 	//返回需要的unicode长度  
-	WCHAR * wszUNICODE = new WCHAR[nLen + 1];
+	int len = sizeof(WCHAR) * (nLen + 1);
+//	WCHAR * wszUNICODE = new WCHAR[nLen + 1];
+	WCHAR* wszUNICODE = (WCHAR*)malloc(len);
 	memset(wszUNICODE, 0, nLen * 2 + 2);
 	nLen = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)utf8, -1, wszUNICODE, nLen);    //把utf8转成unicode
 	return wszUNICODE;
@@ -674,6 +676,72 @@ BOOL ProxyRestart()
 	ExitProcess(0);
 
 	return TRUE;
+}
+
+int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort)
+{
+	sock5001 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (INVALID_SOCKET == sock5001)
+	{
+		printf("sock5001初始化失败 error: %d\n", WSAGetLastError());
+		return 1;
+	}
+
+	int nRet = 0,
+		ulArgp = 1;
+	nRet = ioctlsocket(sock5001, FIONBIO, (unsigned long*)&ulArgp);
+	if (SOCKET_ERROR == nRet)
+	{
+		printf("设置sock5001 非阻塞模式失败 error: %d\n", WSAGetLastError());
+		return 1;
+	}
+
+	struct sockaddr_in sockaddr5001;
+	sockaddr5001.sin_family = AF_INET;
+	sockaddr5001.sin_port = ntohs(ServerPort);
+#ifdef PROXY_DEBUG
+	sockaddr5001.sin_addr.s_addr = inet_addr("127.0.0.1");
+#else
+	sockaddr5001.sin_addr.s_addr = inet_addr(ServerIP);
+#endif // PROXY_DEBUG
+
+	nRet = connect(sock5001, (const sockaddr*)&sockaddr5001, sizeof(sockaddr5001));
+	if (SOCKET_ERROR == nRet)
+	{
+		struct timeval tm;
+		tm.tv_sec = 15;
+		tm.tv_usec = 0;
+
+		fd_set set;
+		FD_ZERO(&set);
+		FD_SET(sock5001, &set);
+		if (select(sock5001 + 1, NULL, &set, NULL, &tm) <= 0)
+		{
+			printf("sock5001 链接超时 error: %d\n", WSAGetLastError());
+			return 2;
+		}
+		else
+		{
+			int error = -1;
+			int errorlen = sizeof(int);
+			getsockopt(sock5001, SOL_SOCKET, SO_ERROR, (char*)&error, &errorlen);
+			if (0 != error)
+			{
+				printf("sock5001链接中出现的错误%d  error: %d\n", error, WSAGetLastError());
+				return 1;
+			}
+		}
+	}
+
+	ulArgp = 0;
+	nRet = ioctlsocket(sock5001, FIONBIO, (unsigned long*)&ulArgp);
+	if (SOCKET_ERROR == nRet)
+	{
+		printf("设置sock5001 阻塞模式失败 error: %d\n", WSAGetLastError());
+		return 1;
+	}
+
+	return 0;
 }
 
 #ifndef USE_SHARE_API

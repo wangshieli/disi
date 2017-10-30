@@ -11,6 +11,7 @@ unsigned int _stdcall completionRoution(LPVOID);
 unsigned int _stdcall mode1(LPVOID pVoid);
 unsigned int _stdcall mode2(LPVOID pVoid);
 unsigned int _stdcall mode2_6086(LPVOID pVoid);
+unsigned int _stdcall mode_6085(LPVOID pVoid);
 
 unsigned int _stdcall switch_thread(LPVOID pVoid);
 
@@ -151,6 +152,8 @@ int main()
 	ontimer_checkversion(NULL, 0, 0, 0);
 #endif // PROXY_DEBUG
 
+	HANDLE h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode_6085, NULL, 0, NULL);
+
 	g_hSwitchThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == g_hSwitchThreadStart)
 	{
@@ -288,8 +291,6 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 
 			printf("线程关闭完成\n");
 
-			g_dwListenPortCount = 0;
-
 			SetEvent(hRedialStartEvent);
 			if (WaitForSingleObject(hRedialCompEvent, INFINITE) != WAIT_OBJECT_0)
 			{
@@ -363,7 +364,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 unsigned int _stdcall mode1(LPVOID pVoid)
 {
 	vector<BUFFER_OBJ*> vFreeBuffer;
-	
+	g_dwListenPortCount = 0;
+
 	g_lobj = new LISTEN_OBJ();
 	g_lobj->init();
 	g_lobj6086 = new LISTEN_OBJ();
@@ -448,7 +450,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 						printf("getsockopt SO_CONNECT_TIME error: %d\n", WSAGetLastError());
 					else
 					{
-						if (optval != 0xffffffff && optval > 300)
+						if (optval != 0xffffffff && optval > 30)
 							vFreeBuffer.push_back(bobj);
 					}
 
@@ -685,7 +687,13 @@ error:
 
 void _stdcall ontimer_checknet(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
-	
+	if (!CheckIsNetWorking())
+	{
+		if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+			return;
+		
+		PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
+	}
 }
 
 unsigned int _stdcall ontimer_thread(void* pVoid)
@@ -693,7 +701,7 @@ unsigned int _stdcall ontimer_thread(void* pVoid)
 	MSG msg;
 	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
-//	SetTimer(NULL, 1, 1000 * 60, ontimer_checknet);
+	SetTimer(NULL, 1, 1000 * 60, ontimer_checknet);
 	SetTimer(NULL, 2, 1000 * 60 * 10, ontimer_checkversion);
 
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -1056,11 +1064,84 @@ error:
 	return 0;
 }
 
-unsigned int _stdcall mode2_6085(LPVOID pVoid)
+DWORD dwLastRequestTime = 0;
+int CALLBACK AcceptCondition(LPWSABUF lpCallerId, LPWSABUF,
+	LPQOS, LPQOS,
+	LPWSABUF, LPWSABUF,
+	GROUP FAR*, DWORD_PTR dwCallbackData
+)
 {
+
+	DWORD NowTimer = GetTickCount();
+	if ((NowTimer - dwLastRequestTime) < 15 * 1000)
+		return CF_REJECT;
+
+	dwLastRequestTime = GetTickCount();
+	return CF_ACCEPT;
+}
+
+unsigned int _stdcall mode_6085(LPVOID pVoid)
+{
+	int err = 0;
 	g_6085socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (INVALID_SOCKET == g_6085socket)
 		goto error;
+
+	struct sockaddr_in addr;
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(6085);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	if (SOCKET_ERROR == bind(g_6085socket, (sockaddr*)&addr, sizeof(addr)) ||
+		SOCKET_ERROR == listen(g_6085socket, 1))
+	{
+		if (WSAEADDRINUSE == WSAGetLastError())
+			printf("6085端口被占用\n");
+		
+		goto error;
+	}
+
+	SOCKET sAccept = INVALID_SOCKET;
+	while (true)
+	{
+		struct sockaddr_in taddr;
+		int len = sizeof(taddr);
+		sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, AcceptCondition, NULL);
+		if (INVALID_SOCKET == sAccept)
+			continue;
+
+		int nRecvLen = 0;
+		int nInfoTotalLen = 512;
+		char* pRecv6085Info = (char*)malloc(512);
+		memset(pRecv6085Info, 0x00, 512);
+		do
+		{
+			if (nRecvLen >= nInfoTotalLen)
+			{
+				free(pRecv6085Info);
+				continue;
+			}
+			err = recv(g_6085socket, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
+			if (err > 0)
+				nRecvLen += err;
+			else
+			{
+				if (SOCKET_ERROR == err)
+				{
+					printf("6085端口在使用中出现错误\n");
+					ProxyRestart();
+					return 0;
+				}
+			}
+
+			if (strstr(pRecv6085Info, "\r\n\r\n") != NULL)
+				break;
+		} while (TRUE);
+
+		printf("6085请求数据: %s\n", pRecv6085Info);
+
+		WaitForSingleObject(g_hDoingNetWork, INFINITE);
+		PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+	}
 
 	return 0;
 

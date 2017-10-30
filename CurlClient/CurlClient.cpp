@@ -224,9 +224,123 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 	return 0;
 }
 
+size_t CWFunc_CheckNetWorking(void* pInfo, size_t size, size_t nmemb, void* pResponse)
+{
+	return size * nmemb;
+}
+
+BOOL CheckIsNetWorking()
+{
+	CURL* curl;
+	CURLcode res;
+	curl = curl_easy_init();
+	if (NULL == curl)
+		return FALSE;
+
+	curl_easy_setopt(curl, CURLOPT_URL, "http://www.baidu.com");
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CWFunc_CheckNetWorking);
+	res = curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+	if (res != CURLE_OK)
+		return FALSE;
+
+	return TRUE;
+}
+
+#ifdef USE_INSTALL_CHROME
+BOOL InstallChrome()
+{
+	BOOL bUpdateShortcut = FALSE;
+	if (_access("C:\\Program Files\\chrome\\chrome-bin", 0) != 0)
+	{
+		bUpdateShortcut = TRUE;
+		CloseTheSpecifiedProcess("chrome.exe");
+		Sleep(1000 * 2);
+		if (!Curl_DownloadFile(URL_DOWNLOAD_CHROME, "C:\\chrome-bin.zip"))
+		{
+			printf("下载 chrome-bin.zip 失败\n");
+			return FALSE;
+		}
+		wchar_t* pSrcZip = ConvertUtf8ToUnicode_("C:\\chrome-bin.zip");
+		if (!dounzip(pSrcZip, L"C:\\Program Files\\chrome"))
+		{
+			free(pSrcZip);
+			pSrcZip = NULL;
+			printf("解压 chrome-bin.zip 失败\n");
+			return FALSE;
+		}
+		free(pSrcZip);
+		pSrcZip = NULL;
+		DeleteFile("C:\\chrome-bin.zip");
+		printf("chrome-bin安装完成\n");
+	}
+
+	char pTpath[MAX_PATH] = { 0 };
+	sprintf_s(pTpath, MAX_PATH, "%s%s", "C:\\Program Files\\chrome\\userdata", "\\Default\\Extensions\\npogbneglgfmgafpepecdconkgapppkd");
+	char pWpath[MAX_PATH] = { 0 };
+	sprintf_s(pWpath, MAX_PATH, "%s%s", "C:\\Program Files\\chrome\\userdata", "\\Default\\Extensions\\edffiillgkekafkdjahahdjhjffllgjg");
+
+	if (_access(pTpath, 0) != 0 || _access(pWpath, 0) != 0)
+	{
+		bUpdateShortcut = TRUE;
+		CloseTheSpecifiedProcess("chrome.exe");
+		Sleep(1000 * 2);
+		if (!Curl_DownloadFile(URL_DOWNLOAD_USERDATA, "C:\\userdata.zip"))
+		{
+			printf("下载 userdata.zip 失败\n");
+			return FALSE;
+		}
+		wchar_t* pSrcZip = ConvertUtf8ToUnicode_("C:\\userdata.zip");
+		if (!dounzip(pSrcZip, L"C:\\Program Files\\chrome"))
+		{
+			free(pSrcZip);
+			pSrcZip = NULL;
+			printf("解压 userdata.zip 失败\n");
+			return FALSE;
+		}
+		free(pSrcZip);
+		pSrcZip = NULL;
+		DeleteFile("C:\\userdata.zip");
+		printf("userdata安装完成\n");
+	}
+
+	char szDesk[MAX_PATH] = { 0 };
+	if (!SHGetSpecialFolderPath(NULL, szDesk, CSIDL_DESKTOPDIRECTORY, 0))
+	{
+		printf("获取桌面地址信息失败\n");
+		return FALSE;
+	}
+	strcat_s(szDesk, "\\chrome46.lnk");
+
+	if (bUpdateShortcut)
+	{
+		if (_access(szDesk, 0) == 0)
+			DeleteFile(szDesk);
+		Sleep(1000 * 2);
+		CreateShortcuts("C:\\Program Files\\chrome\\chrome-bin\\chrome.exe",
+			"--user-data-dir=\"C:\\Program Files\\chrome\\userdata\"",
+			"C:\\Program Files\\chrome\\chrome-bin", szDesk);
+	}
+
+	if (bUpdateShortcut)
+		ShellExecute(NULL, "open", 
+			"C:\\Program Files\\chrome\\chrome-bin\\chrome.exe", 
+			"--user-data-dir=\"C:\\Program Files\\chrome\\userdata\"",
+			NULL, SW_SHOWNORMAL);
+
+	return TRUE;
+}
+#endif
+
 #ifndef USE_CURL_CLIENT
 int main()
 {
+	if (CheckIsNetWorking())
+		printf("net working\n");
+	else
+		printf("net not working\n");
+	getchar();
+
 	CurlResponseData* pResponseData1 = new CurlResponseData();
 	if (NULL == pResponseData1)
 		return -1;

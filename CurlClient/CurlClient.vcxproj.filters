@@ -30,9 +30,6 @@
     <ClCompile Include="..\ShareApi\ShareApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="zlib\dounzip.cpp">
-      <Filter>Zip</Filter>
-    </ClCompile>
     <ClCompile Include="zlib\ioapi.c">
       <Filter>Zip</Filter>
     </ClCompile>
@@ -43,6 +40,9 @@
       <Filter>Zip</Filter>
     </ClCompile>
     <ClCompile Include="zlib\zip_util.cpp">
+      <Filter>Zip</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\dounzip.cpp">
       <Filter>Zip</Filter>
     </ClCompile>
   </ItemGroup>

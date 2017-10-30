@@ -110,6 +110,7 @@ unsigned int _stdcall redial_thread(LPVOID pVoid)
 			printf("≤‚ ‘≤ª≤¶∫≈\n");
 #else
 			DoAdsl();
+			Sleep(1000 * 2);
 #endif // PROXY_DEBUG
 
 			char newIP[16] = { 0 };

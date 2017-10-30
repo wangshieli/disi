@@ -1,15 +1,14 @@
-#include <Windows.h>
-#include <process.h>
+#include "../ShareApi/ShareApi.h"
 #include <functional>
 #include <mutex>
 #include <condition_variable>
 #include <iostream>
 
+#include "../CurlClient/CurlClient.h"
+
 #include "../Proxy/cJSON.h"
 
 #include "sockio\sio_client.h"
-
-#pragma comment(lib, "libcurl.lib")
 
 #pragma warning(disable:4996)
 
@@ -58,6 +57,7 @@ public:
 
 int main()
 {
+	InstallChrome();
 	return 0;
 }
 
