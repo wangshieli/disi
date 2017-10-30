@@ -4,7 +4,8 @@
 #include "cJSON.h"
 #include "md5.h"
 
-#define PROXY_VERSION "proxy-v0.1.33_test"
+#define VERSION "0.1.33"
+#define PROXY_VERSION ("proxy-v"##VERSION##"_test")
 
 typedef void(*PTIoRequestSuccess)(DWORD dwTranstion, void* key, void* buf);
 typedef void(*PTIoRequestFailed)(void* key, void* buf);

@@ -5,12 +5,17 @@
 #include <iostream>
 
 #include "../CurlClient/CurlClient.h"
+#include "../RegistryOperation/RegistryOperation.h"
 
 #include "../Proxy/cJSON.h"
 
 #include "sockio\sio_client.h"
 
 #pragma warning(disable:4996)
+
+
+#define VERSION "0.0.1"
+#define SOCKET_IO_VERSION ("socketio-v"##VERSION##"_test")
 
 #define BUF_SIZE 512
 #define CLIENT_RELINK WM_USER + 501
@@ -29,6 +34,30 @@ bool connect_finish = false;
 
 extern unsigned int g_client_thread_id;
 unsigned int g_client_thread_id = 0;
+
+BOOL RegselfInfo()
+{
+	HKEY hKey = NULL;
+	if (!PRegCreateKey(ManageModule, &hKey))
+		return FALSE;
+
+	char filepath[MAX_PATH] = { 0 };
+	GetModuleFileName(NULL, filepath, MAX_PATH);
+	if (!SetRegValue(hKey, "manage_path", filepath))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	if (!SetRegValue(hKey, "version", VERSION))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+	return TRUE;
+}
 
 class connection_listener
 {
@@ -385,6 +414,13 @@ unsigned int _stdcall io_ontimer_thread(void* pVoid)
 
 int main()
 {
+	printf("Current Version: %s\n", SOCKET_IO_VERSION);
+	if (!RegselfInfo())
+	{
+		printf("注册管理模块信息失败\n");
+		getchar();
+		return 0;
+	}
 	ADDRINFOT* pAddrInfo = ResolveIp(SOCKET_IO_NAME, "443");
 	if (NULL == pAddrInfo)
 		return 0;

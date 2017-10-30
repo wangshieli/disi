@@ -1,13 +1,9 @@
 #define INITGUID
 #include "../ShareApi/ShareApi.h"
+#include "RegistryOperation.h"
 
 DWORD dwType = REG_BINARY | REG_DWORD | REG_EXPAND_SZ | REG_MULTI_SZ | REG_NONE | REG_SZ;
 
-#define SProxy_Tool "Software\\SProxy_Tool"
-#define SProxy (SProxy_Tool##"\\Proxy")
-#define CommandExecute (SProxy_Tool##"\\CommandExecute")
-#define ManageModule (SProxy_Tool##"\\ManageModule")
-#define Chromium (SProxy_Tool##"\\Chromium")
 // Software\\SProxy_Tool
 // Software\\SProxy_Tool\\Proxy
 // Software\\SProxy_Tool\\CommandExecute

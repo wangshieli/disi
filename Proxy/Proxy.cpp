@@ -3,6 +3,7 @@
 
 #include "../PPPOE_Dial/PPPOEDial.h"
 #include "../CurlClient/CurlClient.h"
+#include "../RegistryOperation/RegistryOperation.h"
 
 HANDLE hCompPort = NULL;
 DWORD g_dwPageSize = 0;
@@ -32,6 +33,31 @@ HANDLE g_hMode2ThreadStart = NULL;
 CRITICAL_SECTION g_csLog;
 #endif // _DEBUG
 
+// Software\\SProxy_Tool\\Proxy
+BOOL RegselfInfo()
+{
+	HKEY hKey = NULL;
+	if (!PRegCreateKey(SProxy, &hKey))
+		return FALSE;
+
+	char filepath[MAX_PATH] = { 0 };
+	GetModuleFileName(NULL, filepath, MAX_PATH);
+	if (!SetRegValue(hKey, "proxy_path", filepath))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	if (!SetRegValue(hKey, "version", VERSION))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+	return TRUE;
+}
+
 int main()
 {
 	hTheOneInstance = ::OpenEvent(EVENT_ALL_ACCESS, FALSE, NP_THE_ONE_INSTANCE);
@@ -49,6 +75,13 @@ int main()
 		return 0;
 	}
 	printf("Current Version: %s\n", PROXY_VERSION);
+	if (!RegselfInfo())
+	{
+		printf("注册代理信息失败\n");
+		getchar();
+		return 0;
+	}
+
 	SOCKET sListen = INVALID_SOCKET;
 
 	vector<BUFFER_OBJ*> vFreeBuffer;
