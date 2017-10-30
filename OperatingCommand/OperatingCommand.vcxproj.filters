@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Zlib">
+      <UniqueIdentifier>{1f0eacfc-6b9b-4e66-98e1-554b39302443}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Zlib\include">
+      <UniqueIdentifier>{b87e588d-e6ff-441f-8ca2-3aa8e228a1d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="OperatingCommand.cpp">
@@ -24,5 +30,49 @@
     <ClCompile Include="..\ModifyDNSServers\ModifyDNSServers.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\CurlClient\zlib\dounzip.cpp">
+      <Filter>Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CurlClient\zlib\ioapi.c">
+      <Filter>Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CurlClient\zlib\iowin32.c">
+      <Filter>Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CurlClient\zlib\unzip.c">
+      <Filter>Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CurlClient\zlib\zip_util.cpp">
+      <Filter>Zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CurlClient\CurlClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\CurlClient\zlib\ioapi.h">
+      <Filter>Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\iowin32.h">
+      <Filter>Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\unzip.h">
+      <Filter>Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\wrap_object.h">
+      <Filter>Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\zip_util.h">
+      <Filter>Zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\include\zconf.h">
+      <Filter>Zlib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\include\zip.h">
+      <Filter>Zlib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CurlClient\zlib\include\zlib.h">
+      <Filter>Zlib\include</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

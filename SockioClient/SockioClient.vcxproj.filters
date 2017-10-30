@@ -19,12 +19,6 @@
     <Filter Include="sockio\internal">
       <UniqueIdentifier>{f6fb6dea-4165-4945-988e-4c0026b2b69f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Zip">
-      <UniqueIdentifier>{7d912efa-26a1-4919-8668-a29691e308b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Zip\include">
-      <UniqueIdentifier>{e40ed8e4-4b29-4fc1-800c-ae209dad2a01}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SockioClient.cpp">
@@ -51,21 +45,6 @@
     <ClCompile Include="..\ShareApi\ShareApi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\CurlClient\zlib\ioapi.c">
-      <Filter>Zip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CurlClient\zlib\iowin32.c">
-      <Filter>Zip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CurlClient\zlib\unzip.c">
-      <Filter>Zip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CurlClient\zlib\zip_util.cpp">
-      <Filter>Zip</Filter>
-    </ClCompile>
-    <ClCompile Include="..\CurlClient\zlib\dounzip.cpp">
-      <Filter>Zip</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sockio\internal\sio_client_impl.h">
@@ -85,30 +64,6 @@
     </ClInclude>
     <ClInclude Include="..\Proxy\cJSON.h">
       <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\ioapi.h">
-      <Filter>Zip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\iowin32.h">
-      <Filter>Zip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\unzip.h">
-      <Filter>Zip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\wrap_object.h">
-      <Filter>Zip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\zip_util.h">
-      <Filter>Zip</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\include\zconf.h">
-      <Filter>Zip\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\include\zip.h">
-      <Filter>Zip\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CurlClient\zlib\include\zlib.h">
-      <Filter>Zip\include</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

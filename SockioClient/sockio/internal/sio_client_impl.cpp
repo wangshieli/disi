@@ -18,6 +18,9 @@
 #define LOG(x)
 #endif
 
+#define CLIENT_RELINK WM_USER + 501
+extern unsigned int g_client_thread_id;
+
 using boost::posix_time::milliseconds;
 using namespace std;
 
@@ -88,7 +91,7 @@ namespace sio
         }
         m_con_state = con_opening;
         m_base_url = uri;
-        m_reconn_made = 0;
+        m_reconn_made = 5;
 
         string query_str;
         for(map<string,string>::const_iterator it=query.begin();it!=query.end();++it){
@@ -133,12 +136,12 @@ namespace sio
         auto it = m_sockets.find(aux);
         if(it!= m_sockets.end())
         {
-            return it->second;
+            return (ptr = it->second);
         }
         else
         {
             pair<const string, socket::ptr> p(aux,shared_ptr<sio::socket>(new sio::socket(this,aux)));
-            return (m_sockets.insert(p).first)->second;
+            return (ptr = (m_sockets.insert(p).first)->second);
         }
     }
 
@@ -374,6 +377,13 @@ namespace sio
         m_con_state = con_closed;
         this->sockets_invoke_void(&sio::socket::on_disconnect);
         LOG("Connection failed." << endl);
+
+		if (m_reconn_made % 4 == 0)
+		{
+			PostThreadMessage(g_client_thread_id, CLIENT_RELINK, NULL, NULL);
+			return;
+		}
+
         if(m_reconn_made<m_reconn_attempts)
         {
             LOG("Reconnect for attempt:"<<m_reconn_made<<endl);

@@ -1,4 +1,5 @@
 #include "../ShareApi/ShareApi.h"
+#include "../CurlClient/CurlClient.h"
 #include "../ModifyDNSServers/ModifyDNSServers.h"
 
 // 重启主机: host_restart
@@ -7,6 +8,7 @@
 // chrome重装: chrome_reinstall
 // chrome重启: chrome_restart
 // 插件重装: extension_reinstall
+// chrome检测 chrome_check
 
 int main(int argc, char* argv[])
 {
@@ -62,11 +64,16 @@ int main(int argc, char* argv[])
 		Sleep(1000 * 2);
 		DeleteDirectoryByFullName("\"C:\\Program Files\\chrome\\chrome-bin\"");
 		Sleep(1000 * 5);
-		ProxyRestart();
+		InstallChrome();
 	}
 	else if (strcmp(argv[1], "chrome_restart") == 0)
 	{
-		
+		CloseTheSpecifiedProcess("chrome.exe");
+		Sleep(1000 * 2);
+		ShellExecute(NULL, "open",
+			"C:\\Program Files\\chrome\\chrome-bin\\chrome.exe",
+			"--user-data-dir=\"C:\\Program Files\\chrome\\userdata\"",
+			NULL, SW_SHOWNORMAL);
 	}
 	else if (strcmp(argv[1], "extension_reinstall") == 0)
 	{
@@ -74,7 +81,11 @@ int main(int argc, char* argv[])
 		Sleep(1000 * 2);
 		DeleteDirectoryByFullName("\"C:\\Program Files\\chrome\\userdata\"");
 		Sleep(1000 * 5);
-		ProxyRestart();
+		InstallChrome();
+	}
+	else if (strcmp(argv[1], "chrome_check") == 0)
+	{
+		InstallChrome();
 	}
 
 	return 0;

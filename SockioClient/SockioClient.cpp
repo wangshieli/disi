@@ -26,6 +26,7 @@ mutex _lock;
 condition_variable_any _cond;
 bool connect_finish = false;
 
+extern unsigned int g_client_thread_id;
 unsigned int g_client_thread_id = 0;
 
 class connection_listener
@@ -57,7 +58,6 @@ public:
 
 int main()
 {
-	InstallChrome();
 	return 0;
 }
 
