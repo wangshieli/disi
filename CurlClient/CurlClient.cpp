@@ -156,20 +156,20 @@ error:
 }
 
 HANDLE hReportStartEvent = NULL;
-HANDLE hReportCompEvent = NULL;
+//HANDLE hReportCompEvent = NULL;
 HANDLE hReportThreadStart = NULL;
 
 unsigned int _stdcall report_thread(LPVOID pVoid)
 {
 	hReportStartEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	hReportCompEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+//	hReportCompEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 	
 	SetEvent(hReportThreadStart);
 
 	while (WaitForSingleObject(hReportStartEvent, 1000 * 60 * 5) != WAIT_FAILED)
 	{
-		if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
-			continue;
+		//if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+		//	continue;
 
 		BOOL bSuccess = FALSE;
 		int nAttempts = 0;
@@ -177,14 +177,14 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 		if (NULL == pResponseData)
 		{
 			printf("内存分配失败\n");
-			SetEvent(g_hDoingNetWork);
+			//SetEvent(g_hDoingNetWork);
 			continue;
 		}
 		pResponseData->pData = (char*)malloc(512);
 		if (NULL == pResponseData->pData)
 		{
 			printf("内存分配失败\n");
-			SetEvent(g_hDoingNetWork);
+			//SetEvent(g_hDoingNetWork);
 			continue;
 		}
 		do
@@ -209,16 +209,18 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 		} while (!bSuccess && nAttempts < 5);
 		if (!bSuccess)
 		{
-			SetEvent(g_hDoingNetWork);
+			//SetEvent(g_hDoingNetWork);
+			if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+				continue;
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 			continue;
 		}
 		printf("上报结果: %s\n", pResponseData->pData);
-		SetEvent(g_hDoingNetWork);
+		//SetEvent(g_hDoingNetWork);
 
 		free(pResponseData->pData);
 		free(pResponseData);
-		SetEvent(hReportCompEvent);
+//		SetEvent(hReportCompEvent);
 	}
 	printf("report_thread exit error: %d\n", GetLastError());
 	return 0;

@@ -286,6 +286,11 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 		{
 		case SWITCH_REDIAL:
 		{
+			//while (PeekMessage(&msg, NULL, SWITCH_REDIAL, SWITCH_REDIAL, PM_REMOVE))
+			//{
+			//	printf("清空 SWITCH_REDIAL 消息\n");
+			//}
+
 			if (NULL != g_lobj)
 			{
 				closesocket(g_lobj->sListenSock);
@@ -341,17 +346,13 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			SetEvent(hRedialStartEvent);
 			if (WaitForSingleObject(hRedialCompEvent, INFINITE) != WAIT_OBJECT_0)
 			{
-				printf("WaitForSingleObject hRedialCompEvent error: %d\n", GetLastError());
-				SetEvent(g_hDoingNetWork);
+			//	printf("WaitForSingleObject hRedialCompEvent error: %d\n", GetLastError());
+				printf("异常错误，重启电脑 error = %d\n", GetLastError());
+				getchar();
 				break;
 			}
 			printf("拨号完成\n");
 			SetEvent(g_hDoingNetWork);
-
-			while (PeekMessage(&msg, NULL, SWITCH_REDIAL, SWITCH_REDIAL, PM_REMOVE))
-			{
-				printf("清空 SWITCH_REDIAL 消息\n");
-			}
 
 			GetUsernameAndPassword();
 
@@ -444,12 +445,12 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 	printf("%d\n", g_lobj6086->dwAcceptExPendingCount);
 
 	SetEvent(hReportStartEvent);
-	if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
-	{
-		printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
-		goto error;
-	}
-	printf("上报完成\n");
+	//if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
+	//{
+	//	printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
+	//	goto error;
+	//}
+	//printf("上报完成\n");
 
 	while (true)
 	{
@@ -714,12 +715,6 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 		printf("升级代理失败\n");
 		goto error;
 	}
-
-	//if (!Monitor(app_info))
-	//{
-	//	printf("升级监控程序失败\n");
-	//	goto error;
-	//}
 
 error:
 	SetEvent(g_hDoingNetWork);
@@ -1038,12 +1033,12 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	free(pSendBuf);
 
 	SetEvent(hReportStartEvent);
-	if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
-	{
-		printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
-		goto error;
-	}
-	printf("上报完成\n");
+	//if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
+	//{
+	//	printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
+	//	goto error;
+	//}
+	//printf("上报完成\n");
 
 	int nRecvLen = 0;
 	int nInfoTotalLen = 1024;
