@@ -48,6 +48,9 @@
     <ClCompile Include="..\RegistryOperation\RegistryOperation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\Proxy\md5.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sockio\internal\sio_client_impl.h">
@@ -66,6 +69,9 @@
       <Filter>sockio</Filter>
     </ClInclude>
     <ClInclude Include="..\Proxy\cJSON.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Proxy\md5.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

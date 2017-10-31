@@ -669,11 +669,17 @@ BOOL ProxyRestart()
 	}
 
 	RegCloseKey(hKey);
-	if (NULL != hTheOneInstance)
-		CloseHandle(hTheOneInstance);
+
+	if (_access(proxy_path, 0) != 0)
+		return FALSE;
+
+	char FileName[_MAX_FNAME] = { 0 };
+	_splitpath_s(proxy_path, NULL, 0, NULL, 0, FileName, _MAX_FNAME, NULL, 0);
+	strcat_s(FileName, ".exe");
+	CloseTheSpecifiedProcess(FileName);
+	Sleep(1000 * 2);
 
 	ShellExecute(0, "open", proxy_path, NULL, NULL, SW_SHOWNORMAL);
-	ExitProcess(0);
 
 	return TRUE;
 }
@@ -699,11 +705,7 @@ int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short S
 	struct sockaddr_in sockaddr5001;
 	sockaddr5001.sin_family = AF_INET;
 	sockaddr5001.sin_port = ntohs(ServerPort);
-#ifdef PROXY_DEBUG
-	sockaddr5001.sin_addr.s_addr = inet_addr("127.0.0.1");
-#else
 	sockaddr5001.sin_addr.s_addr = inet_addr(ServerIP);
-#endif // PROXY_DEBUG
 
 	nRet = connect(sock5001, (const sockaddr*)&sockaddr5001, sizeof(sockaddr5001));
 	if (SOCKET_ERROR == nRet)
@@ -758,6 +760,7 @@ unsigned int _stdcall log_thread(LPVOID)
 		{
 			char* pData = (char*)msg.wParam;
 			printf("%s\n", pData);
+			free(pData);
 		}
 		break;
 		default:
@@ -766,6 +769,15 @@ unsigned int _stdcall log_thread(LPVOID)
 	}
 
 	return 0;
+}
+
+void ShowLog(const char* pData, int _len)
+{
+	int len = _len + 1;
+	char* pShow = (char*)malloc(len);
+	memcpy(pShow, pData, _len);
+	pShow[_len] = '\0';
+	PostThreadMessage(g_log_thread_id, LOG_MESSAGE, (WPARAM)pShow, NULL);
 }
 
 ADDRINFOT* ResolveIp(const char* _host, const char* _port)

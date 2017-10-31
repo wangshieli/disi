@@ -2,7 +2,7 @@
 
 #define URL_REPORTED_PROXY_HOST_INFO	"https://cnapi.disi.se/hashes/proxies/%s" // %s = host_id
 #define URL_GET_PROXY_HOST_INFO	"https://wwwphpapi-0.disi.se/v1/host/%s/get"
-#define URL_GET_PROXY_VERSION_INFO	"https://wwwphpapi-0.disi.se/v1/extension/versions?app_secret=F$~((kb~AjO*xgn~&codes=app-proxy,proxy-monitor,app-upgrade&host_id=%s"
+#define URL_GET_PROXY_VERSION_INFO	"https://wwwphpapi-0.disi.se/v1/extension/versions?app_secret=F$~((kb~AjO*xgn~&codes=app-proxy,proxy-monitor,app-upgrade,host-controller,host-proxy2,host-command&host_id=%s"
 #define	URL_GET_CTX_VERSION_INFO	"https://wwwphpapi-0.disi.se/v1/extension/versions?app_secret=F$~((kb~AjO*xgn~&codes=edffiillgkekafkdjahahdjhjffllgjg,npogbneglgfmgafpepecdconkgapppkd&host_id=%s"
 
 #define URL_DOWNLOAD_CHROME	"http://chex.oss-cn-shanghai.aliyuncs.com/a/chrome-bin.zip"

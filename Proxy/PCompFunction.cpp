@@ -39,6 +39,8 @@ void Request_CONNECT(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 		goto error;
 	int nUrlHostLen = pUrlEnd - c_bobj->data - 8;
 	memcpy(UrlHost, c_bobj->data + 8, nUrlHostLen);
+
+	ShowLog(c_bobj->data, pUrlEnd - c_bobj->data);
 	
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
 	if (NULL != pUrlPortStartPoint)
@@ -130,6 +132,8 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 		goto error;
 	int nUrlHostLen = pUrlEnd - c_bobj->data - nLen - HTTP_TAG_LEN;
 	memcpy(UrlHost, c_bobj->data + nLen + HTTP_TAG_LEN, nUrlHostLen);
+
+	ShowLog(c_bobj->data, pUrlEnd - c_bobj->data);
 
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
 	if (NULL != pUrlPortStartPoint)
@@ -308,12 +312,6 @@ void AcceptCompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 		sizeof(sockaddr_in) + 16,
 		&localAddr, &localAddrlen,
 		&remoteAddr, &remoteAddrlen);
-
-#ifdef _DEBUG
-	EnterCriticalSection(&g_csLog);
-	printf("accept: %s", c_bobj->data);
-	LeaveCriticalSection(&g_csLog);
-#endif // _DEBUG
 
 	if (NULL == strstr(c_bobj->data, "\r\n\r\n"))
 	{
@@ -772,12 +770,6 @@ void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 		&localAddr, &localAddrlen,
 		&remoteAddr, &remoteAddrlen);
 
-#ifdef _DEBUG
-	EnterCriticalSection(&g_csLog);
-	printf("accept: %s", c_bobj->data);
-	LeaveCriticalSection(&g_csLog);
-#endif // _DEBUG
-
 	char* pHeader = NULL;
 	if (NULL == (pHeader = strstr(c_bobj->data, "\r\n\r\n")))
 	{
@@ -817,6 +809,8 @@ void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj)
 		}
 		else if ((HeaderLen + len) == (int)c_bobj->dwRecvedCount)
 		{
+			c_bobj->data[c_bobj->datalen] = '\0';
+			ShowLog(c_bobj->data, c_bobj->dwRecvedCount);
 			send(c_sobj->sock, "ok", 2, 0);
 			PCloseSocket(c_sobj);
 			freeSObj(c_sobj);
@@ -902,6 +896,8 @@ void Recv6086RequestHeaderSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bob
 		}
 		else if ((HeaderLen + len) == (int)c_bobj->dwRecvedCount)
 		{
+			c_bobj->data[c_bobj->datalen] = '\0';
+			ShowLog(c_bobj->data, c_bobj->dwRecvedCount);
 			send(c_sobj->sock, "ok", 2, 0);
 			PCloseSocket(c_sobj);
 			freeSObj(c_sobj);
@@ -936,13 +932,10 @@ void Server_CONNECT(u_short nPort)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 
-#ifdef PROXY_DEBUG
-	err = GetAddrInfo("127.0.0.1", "5001", &hints, &sAddrInfo);
-#else
 	char szPort[8] = { 0 };
 	_itoa_s(nPort, szPort, 10);
 	err = GetAddrInfo(vip[pArrayIndex[nIndex]], szPort, &hints, &sAddrInfo);
-#endif // PROXY_DEBUG
+
 	if (0 != err)
 		goto error;
 

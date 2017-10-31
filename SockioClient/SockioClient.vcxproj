@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\CurlClient\CurlClient.cpp" />
     <ClCompile Include="..\Proxy\cjson.c" />
+    <ClCompile Include="..\Proxy\md5.cpp" />
     <ClCompile Include="..\RegistryOperation\RegistryOperation.cpp" />
     <ClCompile Include="..\ShareApi\ShareApi.cpp" />
     <ClCompile Include="SockioClient.cpp" />
@@ -31,6 +32,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Proxy\cJSON.h" />
+    <ClInclude Include="..\Proxy\md5.h" />
     <ClInclude Include="sockio\internal\sio_client_impl.h" />
     <ClInclude Include="sockio\internal\sio_packet.h" />
     <ClInclude Include="sockio\sio_client.h" />
@@ -101,6 +103,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\work\ProxyServer\socket.io\websocketpp-master;D:\work\ProxyServer\socket.io\rapidjson-master\include;D:\work\ProxyServer\socket.io\boost_1_63_0;D:\work\ProxyServer\openssl\inc32;$(IncludePath)</IncludePath>
     <LibraryPath>D:\work\ProxyServer\socket.io\boost_1_63_0\release\lib;$(LibraryPath)</LibraryPath>
+    <TargetName>controller-v0.1.34</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

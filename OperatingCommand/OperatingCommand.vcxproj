@@ -26,6 +26,8 @@
     <ClCompile Include="..\CurlClient\zlib\unzip.c" />
     <ClCompile Include="..\CurlClient\zlib\zip_util.cpp" />
     <ClCompile Include="..\ModifyDNSServers\ModifyDNSServers.cpp" />
+    <ClCompile Include="..\Proxy\cjson.c" />
+    <ClCompile Include="..\Proxy\md5.cpp" />
     <ClCompile Include="..\ShareApi\ShareApi.cpp" />
     <ClCompile Include="OperatingCommand.cpp" />
   </ItemGroup>
@@ -38,6 +40,8 @@
     <ClInclude Include="..\CurlClient\zlib\unzip.h" />
     <ClInclude Include="..\CurlClient\zlib\wrap_object.h" />
     <ClInclude Include="..\CurlClient\zlib\zip_util.h" />
+    <ClInclude Include="..\Proxy\cJSON.h" />
+    <ClInclude Include="..\Proxy\md5.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -103,6 +107,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
+    <TargetName>command-v0.0.1</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

@@ -89,6 +89,8 @@ int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short S
 
 unsigned int _stdcall log_thread(LPVOID);
 
+void ShowLog(const char* pData, int len);
+
 ADDRINFOT* ResolveIp(const char* _host, const char* _port);
 
 extern HANDLE hTheOneInstance;

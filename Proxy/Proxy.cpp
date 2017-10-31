@@ -55,6 +55,17 @@ BOOL RegselfInfo()
 	}
 
 	RegCloseKey(hKey);
+
+	if (!PRegCreateKey("Software\\Proxy", &hKey))
+		return FALSE;
+
+	if (!SetRegValue(hKey, "proxy_path", filepath))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
 	return TRUE;
 }
 
@@ -75,12 +86,14 @@ int main()
 		return 0;
 	}
 	printf("Current Version: %s\n", PROXY_VERSION);
+#ifndef PROXY_DEBUG
 	if (!RegselfInfo())
 	{
 		printf("注册代理信息失败\n");
 		getchar();
 		return 0;
 	}
+#endif // PROXY_DEBUG
 
 	SOCKET sListen = INVALID_SOCKET;
 
@@ -343,8 +356,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			GetUsernameAndPassword();
 
 #ifdef PROXY_DEBUG
-			bSwithMode1 = TRUE;
-			PostThreadMessage(g_switch_threadId, SWITCH_MODE1, 0, 0);
+			bSwithMode1 = FALSE;
+			PostThreadMessage(g_switch_threadId, SWITCH_MODE2, 0, 0);
 #else
 			if (CheckReservedIp(g_AdslIp))// 内网ip
 			{
@@ -424,7 +437,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 		goto error;
 	}
 
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 5; i++)
 	{
 		PostAcceptEx(g_lobj6086, 1);
 	}
@@ -571,8 +584,8 @@ BOOL Monitor(cJSON** pAppInfo)
 
 BOOL Proxy(cJSON** pAppInfo)
 {
-	char* pVersion = cJSON_GetObjectItem(pAppInfo[1], "version")->valuestring;
-	if (CompareVersion(PROXY_VERSION, pVersion))
+	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
+	if (CompareVersion(VERSION, pVersion))
 		return TRUE;
 
 	char szProxyPath[MAX_PATH];
@@ -582,8 +595,8 @@ BOOL Proxy(cJSON** pAppInfo)
 	_makepath_s(szProxyPath, NULL, szTempPath, "proxy.exe", NULL);
 	_makepath_s(szUpgradePath, NULL, szTempPath, "upgrade.exe", NULL);
 
-	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[1], "update_url")->valuestring;
-	char* pUpgradeUrl = cJSON_GetObjectItem(pAppInfo[2], "update_url")->valuestring;
+	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
+	char* pUpgradeUrl = cJSON_GetObjectItem(pAppInfo[1], "update_url")->valuestring;
 	if (NULL == pProxyUrl || NULL == pUpgradeUrl)
 		return FALSE;
 
@@ -592,8 +605,8 @@ BOOL Proxy(cJSON** pAppInfo)
 	UrlFormating(pUpgradeUrl, "\\", szUpgradeUrl);
 	UrlFormating(pProxyUrl, "\\", szProxyUrl);
 
-	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[1], "ext_md5")->valuestring;
-	char* pUpgradeMd5 = cJSON_GetObjectItem(pAppInfo[2], "ext_md5")->valuestring;
+	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
+	char* pUpgradeMd5 = cJSON_GetObjectItem(pAppInfo[1], "ext_md5")->valuestring;
 	if (NULL == pProxyMd5 || NULL == pUpgradeMd5)
 		return FALSE;
 
@@ -676,27 +689,21 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 	}
 
 	int nArraySize = cJSON_GetArraySize(cjArray);
-	if (nArraySize < 3)
+	if (nArraySize < 2)
 	{
-		printf("返回的数据中没有需要的 3 个exe信息 = %d\n", nArraySize);
+		printf("返回的数据中没有需要的 2 个exe信息 = %d\n", nArraySize);
 		goto error;
 	}
 
-	cJSON* app_info[3];
-	app_info[0] = cJSON_GetObjectItem(cjArray, "proxy-monitor");
+	cJSON* app_info[2];
+	app_info[0] = cJSON_GetObjectItem(cjArray, "host-proxy2");
 	if (NULL == app_info[0])
 	{
-		printf("获取 proxy-monitor 版本信息失败\n");
+		printf("获取 app-proxyex 版本信息失败\n");
 		goto error;
 	}
-	app_info[1] = cJSON_GetObjectItem(cjArray, "app-proxy");
+	app_info[1] = cJSON_GetObjectItem(cjArray, "app-upgrade");
 	if (NULL == app_info[1])
-	{
-		printf("获取 app-proxy 版本信息失败\n");
-		goto error;
-	}
-	app_info[2] = cJSON_GetObjectItem(cjArray, "app-upgrade");
-	if (NULL == app_info[2])
 	{
 		printf("获取 app-upgrade 版本信息失败\n");
 		goto error;
@@ -779,7 +786,7 @@ int RecvPortFromDisiServer(SOCKET sock, char** pInfo)
 	char* pRecvBuf = (char*)malloc(128);
 	memset(pRecvBuf, 0x00, 128);
 
-	WaitBytes = 0;
+	WaitBytes = 2;
 	int RecvLen = 0;
 	nRet = recv(sock, pRecvBuf, WaitBytes, 0);
 	if (SOCKET_ERROR != nRet && 0 != nRet)
@@ -962,9 +969,9 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 	{
 		char* pPortInfo = NULL;
 		int nCode = RecvPortFromDisiServer(g_5001socket, &pPortInfo);
-		if (nCode == 1)
+		if (nCode == 2)
 			goto error;
-		else if (nCode == 2)
+		else if (nCode == 1)
 			return 0;
 
 		if (NULL == pPortInfo)
@@ -1015,7 +1022,7 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	DWORD nTimeOut = 5 * 1000;
 	setsockopt(g_6086socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
 
-	err = WSAIoctl(g_5001socket, SIO_KEEPALIVE_VALS,
+	err = WSAIoctl(g_6086socket, SIO_KEEPALIVE_VALS,
 		&alive_in, sizeof(alive_in),
 		&alive_out, sizeof(alive_out),
 		&ulBytesReturn, NULL, NULL);
@@ -1023,7 +1030,7 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	char* pTemp = "IAMPROXY6086BEGINhost_id=%sIAMPROXY6086END";
 	char* pSendBuf = (char*)malloc(128);
 	sprintf_s(pSendBuf, 128, pTemp, g_pClient_id);
-	if (!SendData(g_5001socket, pSendBuf))
+	if (!SendData(g_6086socket, pSendBuf))
 	{
 		free(pSendBuf);
 		goto error;
@@ -1165,7 +1172,6 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 				if (SOCKET_ERROR == err)
 				{
 					printf("6085端口在使用中出现错误\n");
-					ProxyRestart();
 					return 0;
 				}
 			}
@@ -1175,6 +1181,8 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 		} while (TRUE);
 
 		printf("6085请求数据: %s\n", pRecv6085Info);
+
+		send(sAccept, "ok", 3, 0);
 
 		WaitForSingleObject(g_hDoingNetWork, INFINITE);
 		PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
