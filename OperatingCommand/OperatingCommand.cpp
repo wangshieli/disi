@@ -1,6 +1,7 @@
 #include "../ShareApi/ShareApi.h"
 #include "../CurlClient/CurlClient.h"
 #include "../ModifyDNSServers/ModifyDNSServers.h"
+#include "../RegistryOperation/RegistryOperation.h"
 #include "../Proxy/cJSON.h"
 #include "../Proxy/md5.h"
 
@@ -45,15 +46,15 @@ BOOL Proxy(cJSON** pAppInfo)
 	if (NULL == pVersion)
 		return FALSE;
 
-	char szDesk[MAX_PATH] = { 0 };
-	if (!SHGetSpecialFolderPath(NULL, szDesk, CSIDL_DESKTOPDIRECTORY, 0))
-	{
-		printf("获取桌面地址信息失败\n");
-		return FALSE;
-	}
+	//char szDesk[MAX_PATH] = { 0 };
+	//if (!SHGetSpecialFolderPath(NULL, szDesk, CSIDL_DESKTOPDIRECTORY, 0))
+	//{
+	//	printf("获取桌面地址信息失败\n");
+	//	return FALSE;
+	//}
 	char szProxyPath[MAX_PATH];
 
-	sprintf_s(szProxyPath, "%s\\proxy-v%s.exe", szDesk, pVersion);
+	sprintf_s(szProxyPath, "%s\\proxy-v%s.exe", CommandFiler, pVersion);
 
 	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
 	if (NULL == pProxyUrl)
@@ -68,7 +69,7 @@ BOOL Proxy(cJSON** pAppInfo)
 
 	if (!doDownLoad(szProxyPath, szProxyUrl, pProxyMd5))
 		return FALSE;
-
+		
 	ShellExecute(0, "open", szProxyPath, NULL, NULL, SW_SHOWNORMAL);
 
 	return TRUE;
@@ -151,6 +152,35 @@ error:
 		cJSON_Delete(root);
 	free(pResponseData->pData);
 	free(pResponseData);
+}
+
+BOOL ProxyRestart()
+{
+	HKEY hKey;
+	if (!PRegCreateKey(SProxy, &hKey))
+		return FALSE;
+
+	char proxy_path[MAX_PATH];
+	if (!GetRegValue(hKey, "path", proxy_path))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+
+	if (_access(proxy_path, 0) != 0)
+		return FALSE;
+
+	char FileName[_MAX_FNAME] = { 0 };
+	_splitpath_s(proxy_path, NULL, 0, NULL, 0, FileName, _MAX_FNAME, NULL, 0);
+	strcat_s(FileName, ".exe");
+	CloseTheSpecifiedProcess(FileName);
+	Sleep(1000 * 2);
+
+	ShellExecute(0, "open", proxy_path, NULL, NULL, SW_SHOWNORMAL);
+
+	return TRUE;
 }
 
 int main(int argc, char* argv[])

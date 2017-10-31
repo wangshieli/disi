@@ -48,6 +48,7 @@ using namespace std;
 #define MY_ALIGN(size, boundary) (((size) + ((boundary) - 1 )) & ~((boundary) - 1))
 
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event"
+#define CommandFiler "C:\\Command"
 
 BOOL ExcCmd(const char* cmd, char** out);
 
@@ -82,8 +83,6 @@ int GetListenPort();
 BOOL GetServerIpFromHost();
 
 BOOL ComputerRestart();
-
-BOOL ProxyRestart();
 
 int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort);
 

@@ -125,7 +125,7 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	GetRegValue(hKey, "version", Version);
 
 	char pFilePath[MAX_PATH];
-	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", "C:\\Command", Version);
+	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", CommandFiler, Version);
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[2], "version")->valuestring;
 	if (CompareVersion(Version, pVersion) && _access(pFilePath, 0) == 0)
 	{
@@ -134,13 +134,15 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 		return TRUE;
 	}
 
+	CreateDirectory(CommandFiler, NULL);
+
 	char* pMd5 = cJSON_GetObjectItem(pAppInfo[2], "ext_md5")->valuestring;
 	char* pDUrl = cJSON_GetObjectItem(pAppInfo[2], "update_url")->valuestring;
 	char FormatDownUrl[MAX_PATH] = { 0 };
 	UrlFormating(pDUrl, "\\", FormatDownUrl);
 
 	// "C:\\Command\\PWorkUnit.exe"
-	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", "C:\\Command", pVersion);
+	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", CommandFiler, pVersion);
 
 	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
 	{

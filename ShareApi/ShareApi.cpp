@@ -652,38 +652,6 @@ BOOL ComputerRestart()
 	return TRUE;
 }
 
-BOOL ProxyRestart()
-{
-	HKEY hKey;
-	char proxy_path[MAX_PATH];
-	DWORD path_len = MAX_PATH;
-	if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Proxy",
-		0, KEY_ALL_ACCESS, &hKey))
-		return FALSE;
-
-	if (ERROR_SUCCESS != RegQueryValueEx(hKey, "proxy_path", NULL,
-		NULL, (LPBYTE)proxy_path, &path_len))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-
-	if (_access(proxy_path, 0) != 0)
-		return FALSE;
-
-	char FileName[_MAX_FNAME] = { 0 };
-	_splitpath_s(proxy_path, NULL, 0, NULL, 0, FileName, _MAX_FNAME, NULL, 0);
-	strcat_s(FileName, ".exe");
-	CloseTheSpecifiedProcess(FileName);
-	Sleep(1000 * 2);
-
-	ShellExecute(0, "open", proxy_path, NULL, NULL, SW_SHOWNORMAL);
-
-	return TRUE;
-}
-
 int ConnectToDisiServer(SOCKET& sock5001, const char* ServerIP, unsigned short ServerPort)
 {
 	sock5001 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);

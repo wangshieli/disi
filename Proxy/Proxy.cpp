@@ -42,24 +42,13 @@ BOOL RegselfInfo()
 
 	char filepath[MAX_PATH] = { 0 };
 	GetModuleFileName(NULL, filepath, MAX_PATH);
-	if (!SetRegValue(hKey, "proxy_path", filepath))
+	if (!SetRegValue(hKey, "path", filepath))
 	{
 		RegCloseKey(hKey);
 		return FALSE;
 	}
 
 	if (!SetRegValue(hKey, "version", VERSION))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-
-	if (!PRegCreateKey("Software\\Proxy", &hKey))
-		return FALSE;
-
-	if (!SetRegValue(hKey, "proxy_path", filepath))
 	{
 		RegCloseKey(hKey);
 		return FALSE;
