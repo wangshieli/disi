@@ -46,15 +46,9 @@ BOOL Proxy(cJSON** pAppInfo)
 	if (NULL == pVersion)
 		return FALSE;
 
-	//char szDesk[MAX_PATH] = { 0 };
-	//if (!SHGetSpecialFolderPath(NULL, szDesk, CSIDL_DESKTOPDIRECTORY, 0))
-	//{
-	//	printf("获取桌面地址信息失败\n");
-	//	return FALSE;
-	//}
 	char szProxyPath[MAX_PATH];
 
-	sprintf_s(szProxyPath, "%s\\proxy-v%s.exe", CommandFiler, pVersion);
+	sprintf_s(szProxyPath, "%s\\proxy2-v%s.exe", CommandFiler, pVersion);
 
 	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
 	if (NULL == pProxyUrl)
@@ -87,6 +81,7 @@ void DowndProxy()
 	if (NULL == pResponseData->pData)
 	{
 		printf("内存分配失败\n");
+		free(pResponseData);
 		return;
 	}
 

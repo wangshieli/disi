@@ -33,7 +33,7 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 1
+#define PROXY_TEST 0
 
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
@@ -53,6 +53,10 @@ using namespace std;
 BOOL ExcCmd(const char* cmd, char** out);
 
 BOOL CloseTheSpecifiedProcess(const char* ProcessName);
+
+BOOL CloseTheDimProcess(const char* DimProcessName);
+
+BOOL CheckTheDimProcess(const char* DimProcessName);
 
 BOOL CloseRasphone();
 

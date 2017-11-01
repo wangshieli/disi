@@ -5,9 +5,12 @@
 #define CommandExecute (SProxy_Tool##"\\PWorkUnit")
 #define ManageModule (SProxy_Tool##"\\ManageModule")
 #define Chromium (SProxy_Tool##"\\Chromium")
+#define SMonitor	(SProxy_Tool##"\\Monitor")
 
 BOOL PRegCreateKey(const char* lpSubKey, PHKEY phSubKey);
 
 BOOL SetRegValue(HKEY hKey, const char* ItemName, char* pData);
 
 BOOL GetRegValue(HKEY hKey, const char* ItemName, char* pData);
+
+BOOL PRegDeleteValue(HKEY hKey, const char* ItemName);

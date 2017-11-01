@@ -121,6 +121,22 @@ BOOL Curl_GetProxyReportInfo(const char* pHost_id, struct CurlResponseData* pRes
 	return TRUE;
 }
 
+BOOL Curl_GetHostInfo(const char* pHost_id, struct CurlResponseData* pResponseData)
+{
+	char UrlData[MAX_PATH] = { 0 };
+	sprintf_s(UrlData, URL_GET_PROXY_HOST_INFO, pHost_id);
+
+	char pPostData[128] = { 0 };
+	sprintf_s(pPostData, "app_secret=F$~((kb~AjO*xgn~&host_id=%s", pHost_id);
+
+	if (!Curl_POST(UrlData, pPostData, CWFunc_GetProxyVersionInfo, pResponseData))
+		return FALSE;
+
+	pResponseData->pData[pResponseData->dwDataLen] = '\0';
+
+	return TRUE;
+}
+
 BOOL Curl_PostData2Server(const char* url, const char* pData, struct CurlResponseData* pResponseData)
 {
 	char postUrl[MAX_PATH] = { 0 };
@@ -198,6 +214,7 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 		{
 			printf("ƒ⁄¥Ê∑÷≈‰ ß∞‹\n");
 			//SetEvent(g_hDoingNetWork);
+			free(pResponseData);
 			continue;
 		}
 		do

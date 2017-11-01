@@ -77,6 +77,63 @@ BOOL CloseTheSpecifiedProcess(const char* ProcessName)
 	return TRUE;
 }
 
+BOOL CloseTheDimProcess(const char* DimProcessName)
+{
+	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (INVALID_HANDLE_VALUE == hProcessSnap)
+	{
+		printf_s("创建 \"%s\" 系统进程映射失败 error = %d\n", DimProcessName, GetLastError());
+		return FALSE;
+	}
+
+	PROCESSENTRY32 pe32;
+	pe32.dwSize = sizeof(pe32);
+
+	BOOL bFind = Process32First(hProcessSnap, &pe32);
+	while (bFind)
+	{
+		if (NULL != strstr(pe32.szExeFile, DimProcessName))
+		{
+			HANDLE hProcess = OpenProcess(PROCESS_TERMINATE | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
+			TerminateProcess(hProcess, 0);
+			CloseHandle(hProcess);
+		}
+		bFind = Process32Next(hProcessSnap, &pe32);
+	}
+
+	CloseHandle(hProcessSnap);
+
+	return TRUE;
+}
+
+BOOL CheckTheDimProcess(const char* DimProcessName)
+{
+	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (INVALID_HANDLE_VALUE == hProcessSnap)
+	{
+		printf_s("创建 \"%s\" 系统进程映射失败 error = %d\n", DimProcessName, GetLastError());
+		return FALSE;
+	}
+
+	PROCESSENTRY32 pe32;
+	pe32.dwSize = sizeof(pe32);
+
+	BOOL bFind = Process32First(hProcessSnap, &pe32);
+	while (bFind)
+	{
+		if (NULL != strstr(pe32.szExeFile, DimProcessName))
+		{
+			CloseHandle(hProcessSnap);
+			return TRUE;
+		}
+		bFind = Process32Next(hProcessSnap, &pe32);
+	}
+
+	CloseHandle(hProcessSnap);
+
+	return FALSE;
+}
+
 BOOL CloseRasphone()
 {
 	char* pAdslExit = NULL;

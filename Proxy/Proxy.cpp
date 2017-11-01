@@ -638,6 +638,7 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 	if (NULL == pResponseData->pData)
 	{
 		printf("ÄÚ´æ·ÖÅäÊ§°Ü\n");
+		free(pResponseData);
 		SetEvent(g_hDoingNetWork);
 		return;
 	}

