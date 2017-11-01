@@ -346,8 +346,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			GetUsernameAndPassword();
 
 #ifdef PROXY_DEBUG
-			bSwithMode1 = FALSE;
-			PostThreadMessage(g_switch_threadId, SWITCH_MODE2, 0, 0);
+			bSwithMode1 = TRUE;
+			PostThreadMessage(g_switch_threadId, SWITCH_MODE1, 0, 0);
 #else
 			if (CheckReservedIp(g_AdslIp))// ÄÚÍøip
 			{

@@ -108,6 +108,19 @@ BOOL Curl_GetProxyVersionInfo(const char* pHost_id, struct CurlResponseData* pRe
 	return TRUE;
 }
 
+BOOL Curl_GetProxyReportInfo(const char* pHost_id, struct CurlResponseData* pResponseData)
+{
+	char UrlData[MAX_PATH] = { 0 };
+	sprintf_s(UrlData, URL_REPORTED_PROXY_HOST_INFO, pHost_id);
+
+	if (!Curl_GET(UrlData, CWFunc_GetProxyVersionInfo, pResponseData))
+		return FALSE;
+
+	pResponseData->pData[pResponseData->dwDataLen] = '\0';
+
+	return TRUE;
+}
+
 BOOL Curl_PostData2Server(const char* url, const char* pData, struct CurlResponseData* pResponseData)
 {
 	char postUrl[MAX_PATH] = { 0 };
@@ -249,6 +262,32 @@ BOOL CheckIsNetWorking()
 	return TRUE;
 }
 
+BOOL CheckProxyIsNetworking(const char* ProxyIp, u_short ProxyPort)
+{
+	CURL* curl;
+	CURLcode res;
+	curl = curl_easy_init();
+	if (NULL == curl)
+		return FALSE;
+
+	char ProxyInfo[32] = { 0 };
+	sprintf_s(ProxyInfo, "%s:%d", ProxyIp, ProxyPort);
+
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+
+	curl_easy_setopt(curl, CURLOPT_URL, "https://www.baidu.com");
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CWFunc_CheckNetWorking);
+	curl_easy_setopt(curl, CURLOPT_PROXY, ProxyInfo);
+	curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1); // 请求完成之后立即端口连接
+	res = curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+	if (res != CURLE_OK)
+		return FALSE;
+
+	return TRUE;
+}
+
 #ifdef USE_INSTALL_CHROME
 BOOL InstallChrome()
 {
@@ -337,6 +376,33 @@ BOOL InstallChrome()
 #ifndef USE_CURL_CLIENT
 int main()
 {
+	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
+	if (NULL == pResponseData)
+	{
+		printf("内存分配失败\n");
+		return 0;
+	}
+	pResponseData->pData = (char*)malloc(512);
+	if (NULL == pResponseData->pData)
+	{
+		printf("内存分配失败\n");
+		return 0;
+	}
+
+	pResponseData->dwDataLen = 0;
+	if (!Curl_GetProxyReportInfo("ah122", pResponseData))
+	{
+		printf("获取版本信息失败\n");
+		return 0;
+	}
+	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+	getchar();
+	if (CheckProxyIsNetworking("127.0.0.1", 5005))
+		printf("pnet working\n");
+	else
+		printf("pnet not working\n");
+	getchar();
+
 	if (CheckIsNetWorking())
 		printf("net working\n");
 	else
@@ -364,7 +430,7 @@ int main()
 	delete pResponseData1;
 	getchar();
 
-	CurlResponseData* pResponseData = new CurlResponseData();
+	/*CurlResponseData* */pResponseData = new CurlResponseData();
 	if (NULL == pResponseData)
 		return -1;
 	pResponseData->pData = (char*)malloc(512);

@@ -22,6 +22,7 @@ BOOL Curl_GET(const char* pUrl, pCurlWriteFunction pCWFunc, void* pResponseInfo)
 
 size_t CWFunc_GetProxyVersionInfo(void* pInfo, size_t size, size_t nmemb, void* pResponse);
 BOOL Curl_GetProxyVersionInfo(const char* pHost_id, struct CurlResponseData* pResponseData);
+BOOL Curl_GetProxyReportInfo(const char* pHost_id, struct CurlResponseData* pResponseData);
 BOOL Curl_PostData2Server(const char* url, const char* pData, struct CurlResponseData* pResponseData);
 
 
@@ -31,6 +32,8 @@ BOOL Curl_DownloadFile(const char* url, const char* downPath);
 unsigned int _stdcall report_thread(LPVOID pVoid);
 
 BOOL CheckIsNetWorking();
+
+BOOL CheckProxyIsNetworking(const char* ProxyIp, u_short ProxyPort);
 
 #ifdef USE_INSTALL_CHROME
 BOOL InstallChrome();

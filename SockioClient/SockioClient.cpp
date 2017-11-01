@@ -141,7 +141,6 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	char FormatDownUrl[MAX_PATH] = { 0 };
 	UrlFormating(pDUrl, "\\", FormatDownUrl);
 
-	// "C:\\Command\\PWorkUnit.exe"
 	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", CommandFiler, pVersion);
 
 	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
@@ -608,6 +607,101 @@ void _stdcall io_ontimer_resolve(HWND hwnd, UINT message, UINT idTimer, DWORD dw
 	sprintf_s(ResolveIp, "https://%s:443/", pip);
 }
 
+DWORD dwPerErr = 0;
+void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
+{
+	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
+	if (NULL == pResponseData)
+	{
+		printf("内存分配失败\n");
+		return;
+	}
+	pResponseData->pData = (char*)malloc(512);
+	if (NULL == pResponseData->pData)
+	{
+		free(pResponseData);
+		printf("内存分配失败\n");
+		return;
+	}
+
+	pResponseData->dwDataLen = 0;
+	if (!Curl_GetProxyReportInfo(g_pClient_id, pResponseData))
+	{
+		printf("获取代理上报信息失败\n");
+		return;
+	}
+	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+
+	char Ip[16] = { 0 };
+	u_short Port = 0;
+
+	cJSON* root = NULL;
+	root = cJSON_Parse(pResponseData->pData);
+	free(pResponseData->pData);
+	free(pResponseData);
+	if (NULL == root)
+	{
+		printf("获取代理上报信息格式错误\n");
+		return;
+	}
+	cJSON* cSip = cJSON_GetObjectItem(root, "sip");
+	cJSON* cIp = cJSON_GetObjectItem(root, "ip");
+	cJSON* cPort = cJSON_GetObjectItem(root, "port");
+	if (NULL == cSip || NULL == cIp || NULL == cPort)
+	{
+		printf("上报信息中没有IP端口字段\n");
+		goto error;
+	}
+	char* pip = cSip->valuestring;
+	if (NULL == pip)
+	{
+		pip = cIp->valuestring;
+		if (NULL == pip)
+		{
+			printf("获取到的上报信息中ip字段为null\n");
+			goto error;
+		}
+		memcpy(Ip, "127.0.0.1", strlen("127.0.0.1"));
+	}else 
+		memcpy(Ip, pip, strlen(pip));
+	Port = cPort->valueint;
+	if (Port == 0)
+	{
+		printf("获取到的上报信息中port字段为空\n");
+		goto error;
+	}
+
+	cJSON_Delete(root);
+
+	if (!CheckProxyIsNetworking(Ip, Port))
+	{
+		printf("通过代理访问www.baidu.com失败\n");
+		if (CheckIsNetWorking())
+		{
+			printf("电脑能上网\n");
+			if (0 != dwPerErr)
+			{
+				DWORD dwCurrent = GetTickCount();
+				if ((dwCurrent - dwPerErr) > 1000 * 60 * 2)
+				{
+					printf("代理进程错误，重启代理");
+					ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
+				}
+			}
+			else
+				dwPerErr = GetTickCount();
+		}
+		return;
+	}
+	dwPerErr = 0;
+	return;
+
+error:
+	if (NULL != root)
+		cJSON_Delete(root);
+	return;
+}
+
 unsigned int _stdcall io_ontimer_thread(void* pVoid)
 {
 	MSG msg;
@@ -631,19 +725,21 @@ unsigned int _stdcall io_ontimer_thread(void* pVoid)
 int main()
 {
 	printf("Current Version: %s\n", SOCKET_IO_VERSION);
+#ifndef PROXY_DEBUG
 	if (!RegselfInfo())
 	{
 		printf("注册管理模块信息失败\n");
 		getchar();
 		return 0;
 	}
+#endif // PROXY_DEBUG
 
 	if (!GetClient_id(&g_pClient_id))
 	{
 		printf("获取client_id失败\n");
 		return 0;
 	}
-
+	
 	io_ontimer_checkversion(0, 0, 0, 0);
 
 	HKEY hKey = NULL;
