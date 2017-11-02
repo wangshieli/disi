@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -18,38 +18,12 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\CurlClient\CurlClient.cpp" />
-    <ClCompile Include="..\PPPOE_Dial\PPPOEDial.cpp" />
-    <ClCompile Include="..\Proxy\cjson.c" />
-    <ClCompile Include="..\Proxy\md5.cpp" />
-    <ClCompile Include="..\RegistryOperation\RegistryOperation.cpp" />
-    <ClCompile Include="..\ShareApi\ShareApi.cpp" />
-    <ClCompile Include="aes.cpp" />
-    <ClCompile Include="base64.cpp" />
-    <ClCompile Include="SockioClient.cpp" />
-    <ClCompile Include="sockio\internal\sio_client_impl.cpp" />
-    <ClCompile Include="sockio\internal\sio_packet.cpp" />
-    <ClCompile Include="sockio\sio_client.cpp" />
-    <ClCompile Include="sockio\sio_socket.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\Proxy\cJSON.h" />
-    <ClInclude Include="..\Proxy\md5.h" />
-    <ClInclude Include="aes.h" />
-    <ClInclude Include="base64.h" />
-    <ClInclude Include="sockio\internal\sio_client_impl.h" />
-    <ClInclude Include="sockio\internal\sio_packet.h" />
-    <ClInclude Include="sockio\sio_client.h" />
-    <ClInclude Include="sockio\sio_message.h" />
-    <ClInclude Include="sockio\sio_socket.h" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{8D0F33BF-2DFE-4D29-9784-E208628EBEAD}</ProjectGuid>
+    <ProjectGuid>{41C57A81-B3F6-4B97-9C5D-7E40A0DEB9F3}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SockioClient</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <RootNamespace>CurlClient</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -98,17 +72,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\work\ProxyServer\openssl\inc32;D:\work\ProxyServer\socket.io\boost_1_63_0;D:\work\ProxyServer\socket.io\rapidjson-master\include;D:\work\ProxyServer\socket.io\websocketpp-master;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\work\ProxyServer\socket.io\boost_1_63_0\debug\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\work\ProxyServer\socket.io\websocketpp-master;D:\work\ProxyServer\socket.io\rapidjson-master\include;D:\work\ProxyServer\socket.io\boost_1_63_0;D:\work\ProxyServer\openssl\inc32;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\work\ProxyServer\socket.io\boost_1_63_0\release\lib;$(LibraryPath)</LibraryPath>
-    <TargetName>controller-v0.1.37</TargetName>
+    <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -119,17 +92,16 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;BUILDING_LIBCURL;ZLIB_WINAPI;USE_SHARE_API;USE_INSTALL_CHROME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>boost.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -137,8 +109,8 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,8 +125,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;BUILDING_LIBCURL;ZLIB_WINAPI;USE_SHARE_API;USE_INSTALL_CHROME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;BUILD_CONTROLLER;USE_PPPOE_DIAL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -163,7 +135,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>boost.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/SAFESEH:NO %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -173,8 +146,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -183,6 +156,32 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Proxy\cjson.c" />
+    <ClCompile Include="..\Proxy\md5.cpp" />
+    <ClCompile Include="..\ShareApi\ShareApi.cpp" />
+    <ClCompile Include="CurlClient.cpp" />
+    <ClCompile Include="zlib\dounzip.cpp" />
+    <ClCompile Include="zlib\ioapi.c" />
+    <ClCompile Include="zlib\iowin32.c" />
+    <ClCompile Include="zlib\unzip.c" />
+    <ClCompile Include="zlib\zip_util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CurlClient.h" />
+    <ClInclude Include="dounzip.h" />
+    <ClInclude Include="zlib\include\zconf.h" />
+    <ClInclude Include="zlib\include\zip.h" />
+    <ClInclude Include="zlib\include\zlib.h" />
+    <ClInclude Include="zlib\ioapi.h" />
+    <ClInclude Include="zlib\iowin32.h" />
+    <ClInclude Include="zlib\unzip.h" />
+    <ClInclude Include="zlib\wrap_object.h" />
+    <ClInclude Include="zlib\zip_util.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

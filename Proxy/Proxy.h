@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../ShareApi/ShareApi.h"
-#include "cJSON.h"
+//#include "cJSON.h"
 #include "md5.h"
 
-#define VERSION "0.0.2"
-#define PROXY_VERSION ("proxy-v"##VERSION)
+//#define VERSION "0.0.2"
+#define PROXY_VERSION ("proxy2-v"##VERSION)
 
 typedef void(*PTIoRequestSuccess)(DWORD dwTranstion, void* key, void* buf);
 typedef void(*PTIoRequestFailed)(void* key, void* buf);
@@ -151,4 +151,5 @@ extern LISTEN_OBJ* g_lobj6086;
 
 extern SOCKET g_5001socket;
 extern SOCKET g_6086socket;
+extern SOCKET g_5005socket;
 extern SOCKET g_6085socket;

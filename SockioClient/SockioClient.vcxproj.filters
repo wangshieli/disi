@@ -57,6 +57,9 @@
     <ClCompile Include="base64.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\PPPOE_Dial\PPPOEDial.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sockio\internal\sio_client_impl.h">

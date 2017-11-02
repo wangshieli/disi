@@ -41,6 +41,30 @@ using namespace std;
 
 #define LOG_MESSAGE		WM_USER + 4
 
+#ifdef BUILD_CURL
+#define VERSION "0.0.1"
+#endif // BUILD_CURL
+
+#ifdef BUILD_REG
+#define VERSION "0.0.1"
+#endif // BUILD_REG
+
+#ifdef BUILD_PROXY2
+#define VERSION "0.0.4"
+#endif // BUILD_PROXY2
+
+#ifdef BUILD_CONTROLLER
+#define VERSION "0.1.37"
+#endif // BUILD_CONTROLLER
+
+#ifdef BUILD_MONITOR
+#define VERSION "0.0.1"
+#endif // BUILD_MONITOR
+
+#ifdef BUILD_COMMAND
+#define VERSION "0.0.4"
+#endif // BUILD_COMMAND
+
 #if PROXY_TEST
 #define PROXY_DEBUG
 #endif
@@ -111,3 +135,4 @@ extern int nCountOfArray;
 extern int *pArrayIndex;
 extern vector<char*> vip;
 extern unsigned int g_log_thread_id;
+extern HANDLE g_h5005Event;

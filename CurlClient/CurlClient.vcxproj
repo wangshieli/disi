@@ -125,7 +125,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;BUILDING_LIBCURL;ZLIB_WINAPI;USE_SHARE_API;USE_INSTALL_CHROME;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;BUILDING_LIBCURL;ZLIB_WINAPI;USE_SHARE_API;USE_INSTALL_CHROME;BUILD_CURL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -160,6 +160,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Proxy\cjson.c" />
+    <ClCompile Include="..\Proxy\md5.cpp" />
     <ClCompile Include="..\ShareApi\ShareApi.cpp" />
     <ClCompile Include="CurlClient.cpp" />
     <ClCompile Include="zlib\dounzip.cpp" />

@@ -61,6 +61,98 @@ BOOL SetRegValue(HKEY hKey, const char* ItemName, char* pData)
 	return TRUE;
 }
 
+BOOL RegselfInfo(const char* pItem)
+{
+	HKEY hKey = NULL;
+	if (!PRegCreateKey(pItem, &hKey))
+		return FALSE;
+
+	char filepath[MAX_PATH] = { 0 };
+	GetModuleFileName(NULL, filepath, MAX_PATH);
+	if (!SetRegValue(hKey, "path", filepath))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	if (!SetRegValue(hKey, "version", VERSION))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+	return TRUE;
+}
+
+LRESULT ModifyRiskFileType()
+{
+	HKEY hCheckKey;
+	if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER,
+		"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Associations",
+		0,
+		KEY_READ,
+		&hCheckKey))
+	{
+		char Data[MAX_PATH] = { 0 };
+		if (GetRegValue(hCheckKey, "ModRiskFileTypes", Data))
+		{
+			if (strstr(Data, ".exe") != NULL)
+			{
+				RegCloseKey(hCheckKey);
+				return S_OK;
+			}
+		}
+
+		RegCloseKey(hCheckKey);
+	}
+
+	::CoInitialize(NULL);
+	LRESULT hr = S_OK;
+	HKEY hGPOKey = NULL;
+	HKEY hKey = NULL;
+	GUID RegisterGuid = REGISTRY_EXTENSION_GUID;
+	IGroupPolicyObject* pGPO = NULL;
+	hr = CoCreateInstance(CLSID_GroupPolicyObject, NULL, CLSCTX_INPROC_SERVER, IID_IGroupPolicyObject, (LPVOID*)&pGPO);
+	if (FAILED(hr))
+		goto error;
+
+	DWORD dwSection = GPO_SECTION_USER;
+	hr = pGPO->OpenLocalMachineGPO(GPO_OPEN_LOAD_REGISTRY);
+	if (FAILED(hr))
+		goto error;
+
+	hr = pGPO->GetRegistryKey(dwSection, &hGPOKey);
+	if (FAILED(hr))
+		goto error;
+
+	hr = RegCreateKeyEx(hGPOKey, "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Associations", 0, NULL,
+		REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
+	if (ERROR_SUCCESS != hr)
+		goto error;
+
+	const char* pHeadInfo = ".exe";
+	hr = RegSetValueEx(hKey, "ModRiskFileTypes", NULL, REG_SZ, (const unsigned char*)pHeadInfo, strlen(pHeadInfo) + 1);
+	if (ERROR_SUCCESS != hr)
+		goto error;
+
+	GUID guid;
+	CoCreateGuid(&guid);
+
+	hr = pGPO->Save(FALSE, TRUE, &RegisterGuid, &guid);
+
+error:
+	printf("error = %d\n", GetLastError());
+	if (NULL != pGPO)
+		pGPO->Release();
+	if (NULL != hGPOKey)
+		RegCloseKey(hGPOKey);
+	if (NULL != hKey)
+		RegCloseKey(hKey);
+	::CoUninitialize();
+	return hr;
+}
+
 BOOL PCheckKey(const char* KeyName)
 {
 	HKEY hSubKey = NULL;

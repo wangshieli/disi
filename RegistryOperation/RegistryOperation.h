@@ -13,4 +13,6 @@ BOOL SetRegValue(HKEY hKey, const char* ItemName, char* pData);
 
 BOOL GetRegValue(HKEY hKey, const char* ItemName, char* pData);
 
-BOOL PRegDeleteValue(HKEY hKey, const char* ItemName);
+BOOL RegselfInfo(const char* pItem);
+
+LRESULT ModifyRiskFileType();

@@ -12,6 +12,7 @@ unsigned int _stdcall completionRoution(LPVOID);
 unsigned int _stdcall mode1(LPVOID pVoid);
 unsigned int _stdcall mode2(LPVOID pVoid);
 unsigned int _stdcall mode2_6086(LPVOID pVoid);
+unsigned int _stdcall mode2_5005(LPVOID pVoid);
 unsigned int _stdcall mode_6085(LPVOID pVoid);
 
 unsigned int _stdcall switch_thread(LPVOID pVoid);
@@ -25,6 +26,7 @@ LISTEN_OBJ* g_lobj6086 = NULL;
 
 SOCKET g_5001socket = INVALID_SOCKET;
 SOCKET g_6086socket = INVALID_SOCKET;
+SOCKET g_5005socket = INVALID_SOCKET;
 SOCKET g_6085socket = INVALID_SOCKET;
 
 HANDLE g_hMode2ThreadStart = NULL;
@@ -32,31 +34,6 @@ HANDLE g_hMode2ThreadStart = NULL;
 #ifdef _DEBUG
 CRITICAL_SECTION g_csLog;
 #endif // _DEBUG
-
-// Software\\SProxy_Tool\\Proxy
-BOOL RegselfInfo()
-{
-	HKEY hKey = NULL;
-	if (!PRegCreateKey(SProxy, &hKey))
-		return FALSE;
-
-	char filepath[MAX_PATH] = { 0 };
-	GetModuleFileName(NULL, filepath, MAX_PATH);
-	if (!SetRegValue(hKey, "path", filepath))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	if (!SetRegValue(hKey, "version", VERSION))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-	return TRUE;
-}
 
 int main()
 {
@@ -76,7 +53,7 @@ int main()
 	}
 	printf("Current Version: %s\n", PROXY_VERSION);
 #ifndef PROXY_DEBUG
-	if (!RegselfInfo())
+	if (!RegselfInfo(SProxy))
 	{
 		printf("注册代理信息失败\n");
 		getchar();
@@ -130,6 +107,7 @@ int main()
 	InitializeCriticalSection(&g_csBObj);
 
 	g_hMode2ThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+	g_h5005Event = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 #ifdef _DEBUG
 	InitializeCriticalSection(&g_csLog);
@@ -267,6 +245,7 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 
 	HANDLE hModeThread = NULL;
 	HANDLE h6086Thread = NULL;
+	HANDLE h5005Thread = NULL;
 	unsigned int nModeThreadId = 0;
 
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -313,6 +292,11 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 				closesocket(g_6086socket);
 				g_6086socket = INVALID_SOCKET;
 			}
+			if (INVALID_SOCKET != g_5005socket)
+			{
+				closesocket(g_5005socket);
+				g_5005socket = INVALID_SOCKET;
+			}
 
 			if (NULL != hModeThread)
 			{
@@ -328,6 +312,14 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 				WaitForSingleObject(h6086Thread, INFINITE);
 				CloseHandle(h6086Thread);
 				h6086Thread = NULL;
+			}
+
+			if (NULL != h5005Thread)
+			{
+				TerminateThread(h5005Thread, 0);
+				WaitForSingleObject(h5005Thread, INFINITE);
+				CloseHandle(h5005Thread);
+				h5005Thread = NULL;
 			}
 
 			printf("线程关闭完成\n");
@@ -386,6 +378,12 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			if (NULL == h6086Thread)
 			{
 				printf("启动 mode2_6086 失败\n");
+			}
+			WaitForSingleObject(g_hMode2ThreadStart, INFINITE);
+			h5005Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_5005, NULL, 0, NULL);
+			if (NULL == h5005Thread)
+			{
+				printf("启动 mode2_5005 失败\n");
 			}
 		}
 		break;
@@ -514,111 +512,6 @@ error:
 	return -1;
 }
 
-#ifdef PROXY_DEBUG
-#define PROXY_MONITOR_PATH "D:\\Monitor"
-#else
-#define PROXY_MONITOR_PATH "C:\\Monitor"
-#endif // PROXY_DEBUG
-
-BOOL CheckMd5(const char* pFilePath, const char* pMd5)
-{
-	FILE* fptr = NULL;
-	fopen_s(&fptr, pFilePath, "rb");
-	if (NULL == fptr)
-		return FALSE;
-
-	fclose(fptr);
-	string md5value = MD5(ifstream(pFilePath, ios::binary)).toString();
-	if (strcmp(md5value.c_str(), pMd5) == 0)
-		return TRUE;
-
-	DeleteFile(pFilePath);
-	return FALSE;;
-}
-
-BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5)
-{
-	do
-	{
-		if (!Curl_DownloadFile(pUrl, path))
-			return FALSE;
-	} while (!CheckMd5(path, pMd5));
-
-	return TRUE;
-}
-
-BOOL Monitor(cJSON** pAppInfo)
-{
-	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
-	if (CompareVersion("0.0.1", pVersion))
-	{
-		printf("proxy-monitor不需要更新\n");
-		return TRUE;
-	}
-
-	char* pMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
-	char* pDUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
-	char FormatDownUrl[MAX_PATH] = { 0 };
-	UrlFormating(pDUrl, "\\", FormatDownUrl);
-	char pFilePath[MAX_PATH];
-	sprintf_s(pFilePath, "%s\\pwatch-v%s.exe", PROXY_MONITOR_PATH, pVersion);
-
-	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
-		return FALSE;
-
-	Sleep(1000);
-	ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
-	printf("proxy_monitor.exe 更新完成\n");
-	return TRUE;
-}
-
-BOOL Proxy(cJSON** pAppInfo)
-{
-	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
-	if (CompareVersion(VERSION, pVersion))
-		return TRUE;
-
-	char szProxyPath[MAX_PATH];
-	char szUpgradePath[MAX_PATH];
-	char szTempPath[MAX_PATH];
-	int nTempLen = GetTempPath(MAX_PATH, szTempPath);
-	_makepath_s(szProxyPath, NULL, szTempPath, "proxy.exe", NULL);
-	_makepath_s(szUpgradePath, NULL, szTempPath, "upgrade.exe", NULL);
-
-	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
-	char* pUpgradeUrl = cJSON_GetObjectItem(pAppInfo[1], "update_url")->valuestring;
-	if (NULL == pProxyUrl || NULL == pUpgradeUrl)
-		return FALSE;
-
-	char szProxyUrl[MAX_PATH] = { 0 };
-	char szUpgradeUrl[MAX_PATH] = { 0 };
-	UrlFormating(pUpgradeUrl, "\\", szUpgradeUrl);
-	UrlFormating(pProxyUrl, "\\", szProxyUrl);
-
-	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
-	char* pUpgradeMd5 = cJSON_GetObjectItem(pAppInfo[1], "ext_md5")->valuestring;
-	if (NULL == pProxyMd5 || NULL == pUpgradeMd5)
-		return FALSE;
-
-	if (!doDownLoad(szProxyPath, szProxyUrl, pProxyMd5))
-		return FALSE;
-
-	if (!doDownLoad(szUpgradePath, szUpgradeUrl, pUpgradeMd5))
-		return FALSE;
-
-	char CurrentProxyPath[MAX_PATH] = { 0 };
-	GetModuleFileName(NULL, CurrentProxyPath, MAX_PATH);
-	DWORD nCurrentProxyPid = GetCurrentProcessId();
-
-	char Param[1024] = { 0 };
-	char* pParamTemp = "%d \"%s\" \"%s\"";
-	sprintf_s(Param, pParamTemp, nCurrentProxyPid, szProxyPath, CurrentProxyPath);
-
-	ShellExecute(0, "open", szUpgradePath, Param, NULL, SW_SHOWNORMAL);
-
-	return TRUE;
-}
-
 void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
 #ifdef PROXY_DEBUG
@@ -627,91 +520,11 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 
 	if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
 		return;
-	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
-	if (NULL == pResponseData)
-	{
-		printf("内存分配失败\n");
-		SetEvent(g_hDoingNetWork);
-		return;
-	}
-	pResponseData->pData = (char*)malloc(512);
-	if (NULL == pResponseData->pData)
-	{
-		printf("内存分配失败\n");
-		free(pResponseData);
-		SetEvent(g_hDoingNetWork);
-		return;
-	}
 
-	cJSON* root = NULL;
-	pResponseData->dwDataLen = 0;
-	if (!Curl_GetProxyVersionInfo(g_pClient_id, pResponseData))
-	{
-		printf("获取版本信息失败\n");
-		goto error;
-	}
-	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+	if (!ProcessAutoUpdate("host-proxy2", "proxy2.exe"))
+		printf("升级 proxy2 失败\n");
 
-	// 解析数据
-	root = cJSON_Parse(pResponseData->pData);
-	if (NULL == root)
-	{
-		printf("格式化json对象失败\n");
-		goto error;
-	}
-
-	cJSON* cjSuccess = cJSON_GetObjectItem(root, "success");
-	if (NULL == cjSuccess)
-	{
-		printf("接收到的数据中没有 success 字段\n");
-		goto error;
-	}
-	if (0 == cjSuccess->valueint)
-	{
-		printf("上传数据中有错误数据\n");
-		goto error;
-	}
-
-	cJSON* cjArray = cJSON_GetObjectItem(root, "data");
-	if (NULL == cjArray)
-	{
-		printf("接收到的数据中没有 data 字段\n");
-		goto error;
-	}
-
-	int nArraySize = cJSON_GetArraySize(cjArray);
-	if (nArraySize < 2)
-	{
-		printf("返回的数据中没有需要的 2 个exe信息 = %d\n", nArraySize);
-		goto error;
-	}
-
-	cJSON* app_info[2];
-	app_info[0] = cJSON_GetObjectItem(cjArray, "host-proxy2");
-	if (NULL == app_info[0])
-	{
-		printf("获取 app-proxyex 版本信息失败\n");
-		goto error;
-	}
-	app_info[1] = cJSON_GetObjectItem(cjArray, "app-upgrade");
-	if (NULL == app_info[1])
-	{
-		printf("获取 app-upgrade 版本信息失败\n");
-		goto error;
-	}
-
-	if (!Proxy(app_info))
-	{
-		printf("升级代理失败\n");
-		goto error;
-	}
-
-error:
 	SetEvent(g_hDoingNetWork);
-	if (NULL != root)
-		cJSON_Delete(root);
-	free(pResponseData->pData);
-	free(pResponseData);
 }
 
 void _stdcall ontimer_checknet(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
@@ -1029,6 +842,7 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	//	goto error;
 	//}
 	//printf("上报完成\n");
+	SetEvent(g_hMode2ThreadStart);
 
 	int nRecvLen = 0;
 	int nInfoTotalLen = 1024;
@@ -1086,6 +900,53 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 
 	printf("mode2 6086: %s\n", pRecv6086Info);
 	free(pRecv6086Info);
+
+error:
+	WaitForSingleObject(g_hDoingNetWork, INFINITE);
+	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+	return 0;
+}
+
+unsigned int _stdcall mode2_5005(LPVOID pVoid)
+{
+	int nTry = 0;
+	int nCode = 0;
+	int err = 0;
+	struct tcp_keepalive alive_in = { TRUE, 1000 * 60 * 2, 1000 * 5 };
+	struct tcp_keepalive alive_out = { 0 };
+	unsigned long ulBytesReturn = 0;
+
+	do
+	{
+		if (nTry > 5)
+			goto error;
+
+		nCode = ConnectToDisiServer(g_5005socket, vip[pArrayIndex[nIndex]], 5005);
+		if (0 == nCode)
+			break;
+		else if (1 == nCode)
+			goto error;
+		else
+			nTry++;
+	} while (true);
+
+	err = WSAIoctl(g_5005socket, SIO_KEEPALIVE_VALS,
+		&alive_in, sizeof(alive_in),
+		&alive_out, sizeof(alive_out),
+		&ulBytesReturn, NULL, NULL);
+
+	DWORD nTimeOut = 5 * 1000;
+	setsockopt(g_5005socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+	setsockopt(g_5005socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+
+	char* pTemp = "IAMPROXYBEGINhost_id=%sIAMPROXYEND";
+	char pSendBuf[128];
+	sprintf_s(pSendBuf, 128, pTemp, g_pClient_id);
+	do
+	{
+		if (!SendData(g_5005socket, pSendBuf))
+			goto error;
+	} while (WaitForSingleObject(g_h5005Event, 1000 * 2) == WAIT_TIMEOUT);
 
 error:
 	WaitForSingleObject(g_hDoingNetWork, INFINITE);

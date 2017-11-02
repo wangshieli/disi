@@ -2,8 +2,6 @@
 #include "../CurlClient/CurlClient.h"
 #include "../ModifyDNSServers/ModifyDNSServers.h"
 #include "../RegistryOperation/RegistryOperation.h"
-#include "../Proxy/cJSON.h"
-#include "../Proxy/md5.h"
 
 // 重启主机: host_restart
 // 重启代理: proxy_restart
@@ -12,33 +10,6 @@
 // chrome重启: chrome_restart
 // 插件重装: extension_reinstall
 // chrome检测 chrome_check
-
-BOOL CheckMd5(const char* pFilePath, const char* pMd5)
-{
-	FILE* fptr = NULL;
-	fopen_s(&fptr, pFilePath, "rb");
-	if (NULL == fptr)
-		return FALSE;
-
-	fclose(fptr);
-	string md5value = MD5(ifstream(pFilePath, ios::binary)).toString();
-	if (strcmp(md5value.c_str(), pMd5) == 0)
-		return TRUE;
-
-	DeleteFile(pFilePath);
-	return FALSE;;
-}
-
-BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5)
-{
-	do
-	{
-		if (!Curl_DownloadFile(pUrl, path))
-			return FALSE;
-	} while (!CheckMd5(path, pMd5));
-
-	return TRUE;
-}
 
 BOOL Proxy(cJSON** pAppInfo)
 {

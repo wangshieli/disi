@@ -1,4 +1,6 @@
 #pragma once
+#include "../Proxy/cJSON.h"
+#include "../Proxy/md5.h"
 
 #define URL_REPORTED_PROXY_HOST_INFO	"https://cnapi.disi.se/hashes/proxies/%s" // %s = host_id
 #define URL_GET_PROXY_HOST_INFO	"https://wwwphpapi-0.disi.se/v1/host/%s/get"
@@ -35,6 +37,15 @@ unsigned int _stdcall report_thread(LPVOID pVoid);
 BOOL CheckIsNetWorking();
 
 BOOL CheckProxyIsNetworking(const char* ProxyIp, u_short ProxyPort);
+
+BOOL CheckMd5(const char* pFilePath, const char* pMd5);
+
+BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5);
+
+// pModeName = proxy2.exe monitor.exe controller.exe
+BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName);
+
+BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName);
 
 #ifdef USE_INSTALL_CHROME
 BOOL InstallChrome();

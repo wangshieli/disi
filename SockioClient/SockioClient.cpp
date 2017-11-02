@@ -6,17 +6,12 @@
 
 #include "../CurlClient/CurlClient.h"
 #include "../RegistryOperation/RegistryOperation.h"
-
-#include "../Proxy/cJSON.h"
-#include "../Proxy/md5.h"
+#include "../PPPOE_Dial/PPPOEDial.h"
 #include "aes.h"
-
 #include "sockio\sio_client.h"
 
 #pragma warning(disable:4996)
 
-
-#define VERSION "0.1.35"
 #define SOCKET_IO_VERSION ("socketio-v"##VERSION)
 
 #define BUF_SIZE 512
@@ -38,78 +33,58 @@ bool connect_finish = false;
 extern unsigned int g_client_thread_id;
 unsigned int g_client_thread_id = 0;
 
-BOOL CheckMd5(const char* pFilePath, const char* pMd5)
+void InitMsconfig(BOOL bInit);
+
+char* pClear = "@echo off \r\n"
+"echo 正在清除系统垃圾文件，请稍等...... \r\n"
+"del /f /s /q %systemdrive%\\*.tmp \r\n"
+"del /f /s /q %systemdrive%\\*._mp \r\n"
+"del /f /s /q %systemdrive%\\*.log \r\n"
+"del /f /s /q %systemdrive%\\*.gid \r\n"
+"del /f /s /q %systemdrive%\\*.chk \r\n"
+"del /f /s /q %systemdrive%\\*.old \r\n"
+"del /f /s /q %systemdrive%\\recycled\\*.* \r\n"
+"del /f /s /q %windir%\\*.bak \r\n"
+"del /f /s /q %windir%\\prefetch\\*.* \r\n"
+"rd /s /q %windir%\\temp & md %windir%\\temp \r\n"
+"del /f /q %userprofile%\\cookies\\*.* \r\n"
+"del /f /q %userprofile%\\recent\\*.* \r\n"
+"del /f /s /q \"%userprofile%\\Local Settings\\Temporary Internet Files\\*.*\" \r\n"
+"del /f /s /q \"%userprofile%\\Local Settings\\Temp\\*.*\" \r\n"
+"del /f /s /q \"%userprofile%\\recent\\*.*\" \r\n"
+"echo 清除系统LJ完成! ";
+
+void RunClear(const char* _username, const char* _password)
 {
-	FILE* fptr = NULL;
-	fopen_s(&fptr, pFilePath, "rb");
-	if (NULL == fptr)
-		return FALSE;
-
-	fclose(fptr);
-	string md5value = MD5(ifstream(pFilePath, ios::binary)).toString();
-	if (strcmp(md5value.c_str(), pMd5) == 0)
-		return TRUE;
-
-	DeleteFile(pFilePath);
-	return FALSE;;
-}
-
-BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5)
-{
-	do
+	char* pInfo = NULL;
+	char* pCmd = "schtasks /delete /tn StClear /F";
+	ExcCmd(pCmd, &pInfo);
+	if (NULL != pInfo)
 	{
-		if (!Curl_DownloadFile(pUrl, path))
-			return FALSE;
-	} while (!CheckMd5(path, pMd5));
+		fprintf(stderr, "%s\n", pInfo);
+		free(pInfo);
+		pInfo = NULL;
+	}
 
-	return TRUE;
-}
+	FILE *fp = NULL;
+	fopen_s(&fp, "C:/Clear.bat", "wb");
+	if (NULL == fp)
+		return;
+	int len = strlen(pClear) + 1;
+	fwrite(pClear, 1, len, fp);
+	fclose(fp);
 
-BOOL Controller(cJSON** pAppInfo)
-{
-	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
-	if (CompareVersion(VERSION, pVersion))
-		return TRUE;
-
-	char szProxyPath[MAX_PATH];
-	char szUpgradePath[MAX_PATH];
-	char szTempPath[MAX_PATH];
-	int nTempLen = GetTempPath(MAX_PATH, szTempPath);
-	_makepath_s(szProxyPath, NULL, szTempPath, "proxy.exe", NULL);
-	_makepath_s(szUpgradePath, NULL, szTempPath, "upgrade.exe", NULL);
-
-	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
-	char* pUpgradeUrl = cJSON_GetObjectItem(pAppInfo[1], "update_url")->valuestring;
-	if (NULL == pProxyUrl || NULL == pUpgradeUrl)
-		return FALSE;
-
-	char szProxyUrl[MAX_PATH] = { 0 };
-	char szUpgradeUrl[MAX_PATH] = { 0 };
-	UrlFormating(pUpgradeUrl, "\\", szUpgradeUrl);
-	UrlFormating(pProxyUrl, "\\", szProxyUrl);
-
-	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
-	char* pUpgradeMd5 = cJSON_GetObjectItem(pAppInfo[1], "ext_md5")->valuestring;
-	if (NULL == pProxyMd5 || NULL == pUpgradeMd5)
-		return FALSE;
-
-	if (!doDownLoad(szProxyPath, szProxyUrl, pProxyMd5))
-		return FALSE;
-
-	if (!doDownLoad(szUpgradePath, szUpgradeUrl, pUpgradeMd5))
-		return FALSE;
-
-	char CurrentProxyPath[MAX_PATH] = { 0 };
-	GetModuleFileName(NULL, CurrentProxyPath, MAX_PATH);
-	DWORD nCurrentProxyPid = GetCurrentProcessId();
-
-	char Param[1024] = { 0 };
-	char* pParamTemp = "%d \"%s\" \"%s\"";
-	sprintf_s(Param, pParamTemp, nCurrentProxyPid, szProxyPath, CurrentProxyPath);
-
-	ShellExecute(0, "open", szUpgradePath, Param, NULL, SW_SHOWNORMAL);
-
-	return TRUE;
+	pCmd = "schtasks /create /sc daily /st 06:00:00 /tn StClear /tr C:/Clear.bat /ru %s /rp %s";
+	char cCmd[256];
+	sprintf_s(cCmd, pCmd, _username, _password);
+	ExcCmd(cCmd, &pInfo);
+	if (NULL != pInfo)
+	{
+		fprintf(stderr, "%s\n", pInfo);
+		free(pInfo);
+		pInfo = NULL;
+	}
+	ShellExecute(0, "open", "C:/Clear.bat", NULL, NULL, SW_SHOWNORMAL);
 }
 
 BOOL PWorkUnit(cJSON** pAppInfo)
@@ -277,9 +252,9 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		goto error;
 	}
 
-	if (!Controller(app_info))
+	if (!AutoUpdate(app_info, "controller.exe"))
 	{
-		printf("升级代理失败\n");
+		printf("升级controller程序失败\n");
 		goto error;
 	}
 
@@ -295,35 +270,13 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		goto error;
 	}
 
+	InitMsconfig(FALSE);
+
 error:
 	if (NULL != root)
 		cJSON_Delete(root);
 	free(pResponseData->pData);
 	free(pResponseData);
-}
-
-BOOL RegselfInfo()
-{
-	HKEY hKey = NULL;
-	if (!PRegCreateKey(ManageModule, &hKey))
-		return FALSE;
-
-	char filepath[MAX_PATH] = { 0 };
-	GetModuleFileName(NULL, filepath, MAX_PATH);
-	if (!SetRegValue(hKey, "path", filepath))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	if (!SetRegValue(hKey, "version", VERSION))
-	{
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-	return TRUE;
 }
 
 class connection_listener
@@ -796,8 +749,8 @@ void CleanMonitor()
 
 	CloseTheDimProcess("pwatch-v");
 	Sleep(1000 * 2);
-	CloseTheDimProcess("proxy-v");
-	Sleep(1000 * 2);
+	//CloseTheDimProcess("proxy-v");
+	//Sleep(1000 * 2);
 
 	DeleteDirectoryByFullName("\"C:\\MyWard\"");
 }
@@ -922,6 +875,8 @@ void InitMsconfig(BOOL bInit)
 	{
 		if (!Winlogon(pusername, ppassword))
 			printf("设置开机自动登陆失败\n");
+
+		RunClear(pusername, ppassword);
 	}
 
 	free(ppassword);
@@ -936,10 +891,14 @@ error:
 
 int main()
 {
+	if (!GetAdslInfo(g_AdslIp))
+		DoAdsl();
+
 	CleanMonitor();
+	ModifyRiskFileType();
 	printf("Current Version: %s\n", SOCKET_IO_VERSION);
 #ifndef PROXY_DEBUG
-	if (!RegselfInfo())
+	if (!RegselfInfo(ManageModule))
 	{
 		printf("注册管理模块信息失败\n");
 		getchar();
@@ -952,8 +911,6 @@ int main()
 		printf("获取client_id失败\n");
 		return 0;
 	}
-
-	InitMsconfig(TRUE);
 	
 	io_ontimer_checkversion(0, 0, 0, 0);
 
@@ -973,6 +930,8 @@ int main()
 	}
 
 	RegCloseKey(hKey);
+
+	InitMsconfig(TRUE);
 
 
 	ADDRINFOT* pAddrInfo = ResolveIp(SOCKET_IO_NAME, "443");

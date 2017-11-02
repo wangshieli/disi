@@ -8,6 +8,7 @@ char g_AdslIp[16];
 BOOL bSwithMode1 = TRUE;
 unsigned int g_switch_threadId = 0;
 HANDLE g_hSwitchThreadStart = NULL;
+HANDLE g_h5005Event = NULL;
 char* g_pClient_id = NULL;
 int g_nPort = 0;
 int nIndex = 0;
@@ -684,7 +685,7 @@ BOOL ComputerRestart()
 	HANDLE hToken;
 	TOKEN_PRIVILEGES tkp;
 
-	if (OpenProcessToken(GetCurrentProcess(),
+	if (!OpenProcessToken(GetCurrentProcess(),
 		TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
 		return FALSE;
 
