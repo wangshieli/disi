@@ -87,7 +87,7 @@ int main()
 	SYSTEM_INFO sys;
 	GetSystemInfo(&sys);
 	DWORD dwNumberOfCPU = sys.dwNumberOfProcessors;
-	g_dwPageSize = sys.dwPageSize;
+	g_dwPageSize = sys.dwPageSize * 2;
 
 #ifdef _DEBUG
 	printf("dwNumberOfProcessors = %d\n", sys.dwNumberOfProcessors);
@@ -432,12 +432,6 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 	printf("%d\n", g_lobj6086->dwAcceptExPendingCount);
 
 	SetEvent(hReportStartEvent);
-	//if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
-	//{
-	//	printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
-	//	goto error;
-	//}
-	//printf("上报完成\n");
 
 	while (true)
 	{
@@ -469,7 +463,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 				PostAcceptEx(LSock_Array[i], i);
 			}
 
-			if (LSock_Array[i]->dwAcceptExPendingCount > 30)
+			/*if (LSock_Array[i]->dwAcceptExPendingCount > 180)
 			{
 				vFreeBuffer.clear();
 				int optlen,
@@ -485,7 +479,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 						printf("getsockopt SO_CONNECT_TIME error: %d\n", WSAGetLastError());
 					else
 					{
-						if (optval != 0xffffffff && optval > 10 && bobj->dwSendedCount == 0)
+						if (optval != 0xffffffff && optval > 60 && bobj->dwSendedCount == 0)
 						{
 							bobj->dwSendedCount = 1;
 							vFreeBuffer.push_back(bobj);
@@ -499,7 +493,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 				size_t nsize = vFreeBuffer.size();
 				for (size_t i = 0; i < nsize; i++)
 					PCloseSocket(vFreeBuffer[i]->pRelatedSObj);
-			}
+			}*/
 		}
 	}
 
@@ -993,6 +987,11 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 	SOCKET sAccept = INVALID_SOCKET;
 	while (true)
 	{
+		if (INVALID_SOCKET != sAccept)
+		{
+			closesocket(sAccept);
+			sAccept = INVALID_SOCKET;
+		}
 		struct sockaddr_in taddr;
 		int len = sizeof(taddr);
 		sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, AcceptCondition, NULL);
@@ -1010,14 +1009,14 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 				free(pRecv6085Info);
 				continue;
 			}
-			err = recv(g_6085socket, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
+			err = recv(sAccept, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
 			if (err > 0)
 				nRecvLen += err;
 			else
 			{
 				if (SOCKET_ERROR == err)
 				{
-					printf("6085端口在使用中出现错误\n");
+					printf("6085端口在使用中出现错误 error = %d\n", WSAGetLastError());
 					return 0;
 				}
 			}

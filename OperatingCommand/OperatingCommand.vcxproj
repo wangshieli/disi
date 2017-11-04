@@ -120,7 +120,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_SHARE_API;USE_MODIFY_DNS;BUILDING_LIBCURL;ZLIB_WINAPI;USE_CURL_CLIENT;USE_INSTALL_CHROME;USE_REG_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_SHARE_API;USE_MODIFY_DNS;BUILDING_LIBCURL;ZLIB_WINAPI;USE_CURL_CLIENT;USE_INSTALL_CHROME;USE_REG_API;BUILD_COMMAND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>

@@ -33,8 +33,6 @@ using namespace std;
 #pragma comment(lib, "IPHlpApi.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-#define PROXY_TEST 0
-
 #define SWITCH_MODE1	WM_USER + 1
 #define SWITCH_MODE2	WM_USER + 2
 #define SWITCH_REDIAL	WM_USER + 3
@@ -65,7 +63,7 @@ using namespace std;
 #define VERSION "0.0.4"
 #endif // BUILD_COMMAND
 
-#if PROXY_TEST
+#ifdef _DEBUG
 #define PROXY_DEBUG
 #endif
 
@@ -77,6 +75,8 @@ using namespace std;
 BOOL ExcCmd(const char* cmd, char** out);
 
 BOOL CloseTheSpecifiedProcess(const char* ProcessName);
+
+BOOL CheckTheSpecifiedProcess(const char* ProcessName);
 
 BOOL CloseTheDimProcess(const char* DimProcessName);
 

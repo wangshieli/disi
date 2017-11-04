@@ -1,10 +1,7 @@
 #pragma once
 
 #include "../ShareApi/ShareApi.h"
-//#include "cJSON.h"
-#include "md5.h"
 
-//#define VERSION "0.0.2"
 #define PROXY_VERSION ("proxy2-v"##VERSION)
 
 typedef void(*PTIoRequestSuccess)(DWORD dwTranstion, void* key, void* buf);

@@ -225,6 +225,10 @@ unsigned int _stdcall report_thread(LPVOID pVoid)
 
 	while (WaitForSingleObject(hReportStartEvent, 1000 * 60 * 5) != WAIT_FAILED)
 	{
+#ifdef PROXY_DEBUG
+		continue;
+#endif // PROXY_DEBUG
+
 		//if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
 		//	continue;
 
@@ -557,9 +561,35 @@ BOOL InstallChrome()
 }
 #endif
 
+BOOL CheckProxyIsNetworking01(const char* ProxyIp, u_short ProxyPort)
+{
+	CURL* curl;
+	CURLcode res;
+	curl = curl_easy_init();
+	if (NULL == curl)
+		return FALSE;
+
+	char ProxyInfo[32] = { 0 };
+	sprintf_s(ProxyInfo, "%s:%d", ProxyIp, ProxyPort);
+
+	curl_easy_setopt(curl, CURLOPT_URL, "http://www.baidu.com");
+	//curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CWFunc_CheckNetWorking);
+	curl_easy_setopt(curl, CURLOPT_PROXY, ProxyInfo);
+	curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 1); // 请求完成之后立即端口连接
+	res = curl_easy_perform(curl);
+	curl_easy_cleanup(curl);
+	if (res != CURLE_OK)
+		return FALSE;
+
+	return TRUE;
+}
+
 #ifndef USE_CURL_CLIENT
 int main()
 {
+	if (!CheckProxyIsNetworking01("127.0.0.1", 5005))
+		printf("失败\n");
+	getchar();
 	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
 	if (NULL == pResponseData)
 	{

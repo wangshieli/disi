@@ -89,28 +89,8 @@ int main()
 		_splitpath_s(manage_path, NULL, 0, NULL, 0, FileName, _MAX_FNAME, NULL, 0);
 		strcat_s(FileName, ".exe");
 
-		HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-		if (INVALID_HANDLE_VALUE == hProcessSnap)
-		{
-			printf_s("创建 \"%s\" 系统进程映射失败 error = %d\n", FileName, GetLastError());
-			return FALSE;
-		}
+		bFind = CheckTheSpecifiedProcess(FileName);
 
-		PROCESSENTRY32 pe32;
-		pe32.dwSize = sizeof(pe32);
-
-		BOOL bMode = Process32First(hProcessSnap, &pe32);
-		while (bMode)
-		{
-			if (0 == strcmp(pe32.szExeFile, FileName))
-			{
-				bFind = TRUE;
-				break;
-			}
-			bMode = Process32Next(hProcessSnap, &pe32);
-		}
-
-		CloseHandle(hProcessSnap);
 		if (!bFind)
 			ShellExecute(0, "open", manage_path, NULL, NULL, SW_SHOWNORMAL);
 

@@ -40,7 +40,9 @@ void Request_CONNECT(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 	int nUrlHostLen = pUrlEnd - c_bobj->data - 8;
 	memcpy(UrlHost, c_bobj->data + 8, nUrlHostLen);
 
+#ifndef PROXY_DEBUG
 	ShowLog(c_bobj->data, pUrlEnd - c_bobj->data);
+#endif // !PROXY_DEBUG
 	
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
 	if (NULL != pUrlPortStartPoint)
@@ -130,10 +132,15 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 	char* pUrlEnd = strchr(c_bobj->data + nLen + HTTP_TAG_LEN, '/');
 	if (NULL == pUrlEnd)
 		goto error;
+
 	int nUrlHostLen = pUrlEnd - c_bobj->data - nLen - HTTP_TAG_LEN;
 	memcpy(UrlHost, c_bobj->data + nLen + HTTP_TAG_LEN, nUrlHostLen);
+	if (strstr(UrlHost, "ait183.analysys.cn") != NULL)
+		goto error;
 
+#ifndef PROXY_DEBUG
 	ShowLog(c_bobj->data, pUrlEnd - c_bobj->data);
+#endif // PROXY_DEBUG
 
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
 	if (NULL != pUrlPortStartPoint)
@@ -144,6 +151,23 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 		memcpy(UrlPort, pUrlPortStartPoint + 1, nPortLen);
 		UrlPort[nPortLen] = '\0';
 	}
+
+	// Accept-Encoding: gzip
+	//if (nlen == 4)
+	//{
+	//	char* pEncoding = StrStrI(pUrlEnd, "Accept-Encoding:");
+	//	if (NULL != pEncoding)
+	//	{
+	//		char* pEncodingEnd = strstr(pEncoding, "\r\n");
+	//		if (NULL == pEncodingEnd)
+	//			goto error;
+	//		int nBeforeEncodingLen = pEncoding - pUrlEnd;
+	//		int nAfterEncodingLen = c_bobj->dwRecvedCount - (pEncodingEnd - c_bobj->data) - strlen("\r\n");
+	//		int EncodingLen = pEncodingEnd - pEncoding + strlen("\r\n");
+	//		c_bobj->dwRecvedCount -= EncodingLen;
+	//		memcpy(pEncoding, pEncodingEnd + strlen("\r\n"), nAfterEncodingLen);
+	//	}
+	//}
 
 	char* pProxy_Connection = StrStrI(pUrlEnd, "Proxy-Connection:");
 	if (NULL == pProxy_Connection)
@@ -217,8 +241,8 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 	if (!BindSObjWithCompPort(s_sobj))
 		goto error;
 
-	c_bobj->SetIoRequestFunction(GET_ConnectServerFailed, GET_ConnectServerSuccess);
 	s_sobj->sAddrInfo = sAddrInfo;
+	c_bobj->SetIoRequestFunction(GET_ConnectServerFailed, GET_ConnectServerSuccess);
 	DWORD dwBytes = 0;
 	if (!lpfnConnectEx(s_sobj->sock, (sockaddr*)sAddrInfo->ai_addr, sAddrInfo->ai_addrlen, c_bobj->data, c_bobj->dwRecvedCount, &dwBytes, &c_bobj->ol))
 	{
@@ -248,6 +272,10 @@ error:
 
 void ParsingRequestHeader(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 {
+#ifndef PROXY_DEBUG
+	ShowLog(c_bobj->data, c_bobj->dwRecvedCount);
+#endif // !PROXY_DEBUG
+
 	if (c_bobj->data[0] == 'C')
 	{
 		Request_CONNECT(c_sobj, c_bobj);
@@ -259,6 +287,11 @@ void ParsingRequestHeader(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 	else if (c_bobj->data[0] == 'G')
 	{
 		Request_GET(c_sobj, c_bobj, 4);
+	}
+	else
+	{
+		char* p = strstr(c_bobj->data, " ");
+		Request_GET(c_sobj, c_bobj, p - c_bobj->data);
 	}
 }
 
@@ -411,22 +444,24 @@ void CONNECT_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bob
 
 	FreeAddrInfo(s_sobj->sAddrInfo);
 
-	int nSeconds, 
-		nBytes = sizeof(nSeconds), 
-		nErr = 0;
+	//int nSeconds, 
+	//	nBytes = sizeof(nSeconds), 
+	//	nErr = 0;
 
-	nErr = getsockopt(s_sobj->sock, SOL_SOCKET, SO_CONNECT_TIME, (char*)&nSeconds, &nBytes);
-	if (SOCKET_ERROR == nErr)
-		goto error;
+	//nErr = getsockopt(s_sobj->sock, SOL_SOCKET, SO_CONNECT_TIME, (char*)&nSeconds, &nBytes);
+	//if (SOCKET_ERROR == nErr)
+	//	goto error;
 
-	if (0xffffffff == nSeconds)
-		goto error;
+	//if (0xffffffff == nSeconds)
+	//	goto error;
 
 //	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 
 	const char pResponse[] = "HTTP/1.0 200 Connection established\r\nProxy-agent: HTTP Proxy Lite /0.2\r\n\r\n";
-	strcpy_s(c_bobj->data, c_bobj->datalen, pResponse);
+	//strcpy_s(c_bobj->data, c_bobj->datalen, pResponse); ÎÊÌâ2
 	c_bobj->dwRecvedCount = strlen(pResponse);
+	c_bobj->dwSendedCount = 0;
+	memcpy(c_bobj->data, pResponse, c_bobj->dwRecvedCount);
 
 	c_bobj->SetIoRequestFunction(SendReponseFailed, SendReponseSuccess);
 	if (!PostSend(c_sobj, c_bobj))
@@ -485,8 +520,11 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 	InterlockedIncrement(c_sobj->pRef);
 	if (!PostRecv(c_sobj, c_bobj))
 	{
-		InterlockedDecrement(c_sobj->pRef);
-		goto error;
+		PCloseSocket(c_sobj);
+		PCloseSocket(s_sobj);
+		if (0 == InterlockedDecrement(c_sobj->pRef))
+			goto error;
+		return;
 	}
 
 	s_bobj->dwRecvedCount = 0;
@@ -495,6 +533,7 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 	InterlockedIncrement(s_sobj->pRef);
 	if (!PostRecv(s_sobj, s_bobj))
 	{
+		PCloseSocket(s_sobj);
 		PCloseSocket(c_sobj);
 		if (0 == InterlockedDecrement(s_sobj->pRef))
 			goto error;
@@ -503,8 +542,8 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 	return;
 
 error:
-	PCloseSocket(s_sobj);
-	PCloseSocket(c_sobj);
+	/*PCloseSocket(s_sobj);
+	PCloseSocket(c_sobj);*/
 	freeSObj(s_sobj);
 	freeSObj(c_sobj);
 	freeBObj(s_bobj);
@@ -515,7 +554,6 @@ error:
 void RecvCompFailed(void* _sobj, void* _bobj)
 {
 	SOCKET_OBJ* pCurrentSObj = (SOCKET_OBJ*)_sobj;
-	SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
 
 #ifdef _DEBUG
 	DWORD dwTranstion = 0;
@@ -526,13 +564,15 @@ void RecvCompFailed(void* _sobj, void* _bobj)
 
 	//shutdown(pCurrentSObj->sock, SD_BOTH);
 	//shutdown(pPairedSObj->sock, SD_BOTH);
+	PCloseSocket(pCurrentSObj);
 
 	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
 	{
+		SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
 		BUFFER_OBJ* pCurrentBObj = pCurrentSObj->pRelatedBObj;
 		BUFFER_OBJ* pPairedBObj = pPairedSObj->pRelatedBObj;
-		PCloseSocket(pCurrentSObj);
-		PCloseSocket(pPairedSObj);
+		//PCloseSocket(pCurrentSObj);
+		//PCloseSocket(pPairedSObj);
 		freeSObj(pCurrentSObj);
 		freeSObj(pPairedSObj);
 		freeBObj(pCurrentBObj);
@@ -549,14 +589,23 @@ void RecvCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 	BUFFER_OBJ* pCurrentBObj = (BUFFER_OBJ*)_bobj;
 
 	pCurrentBObj->dwRecvedCount += dwTransion;
+	//if (pCurrentBObj->dwRecvedCount >= 8)
+	//{
+	//	if (strncmp(pCurrentBObj->data, "HTTP/1.1", 8) == 0)
+	//		pCurrentBObj->data[7] = '0';
+	//}
 	pCurrentBObj->SetIoRequestFunction(SendCompFailed, SendCompSuccess);
+
+#ifdef PROXY_DEBUG
+	ShowLog(pCurrentBObj->data, pCurrentBObj->dwRecvedCount);
+#endif // PROXY_DEBUG
 
 	SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
 	if (!PostSend(pPairedSObj, pCurrentBObj))
 	{
 		PCloseSocket(pCurrentSObj);
-		PCloseSocket(pPairedSObj);
-		if (0 == InterlockedDecrement(pPairedSObj->pRef))
+		//PCloseSocket(pPairedSObj);
+		if (0 == InterlockedDecrement(pCurrentSObj->pRef))
 			goto error;
 	}
 
@@ -564,8 +613,8 @@ void RecvCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 
 error:
 	BUFFER_OBJ* pPairedBObj = pPairedSObj->pRelatedBObj;
-	PCloseSocket(pCurrentSObj);
-	PCloseSocket(pPairedSObj);
+	//PCloseSocket(pCurrentSObj);
+	//PCloseSocket(pPairedSObj);
 	freeSObj(pCurrentSObj);
 	freeSObj(pPairedSObj);
 	freeBObj(pCurrentBObj);
@@ -586,13 +635,14 @@ void SendCompFailed(void* _sobj, void* _bobj)
 
 	//shutdown(pCurrentSObj->sock, SD_BOTH);
 	//shutdown(pPairedSObj->sock, SD_BOTH);
+	PCloseSocket(pPairedSObj);
 
-	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
+	if (0 == InterlockedDecrement(pPairedSObj->pRef))
 	{
 		BUFFER_OBJ* pCurrentBObj = pCurrentSObj->pRelatedBObj;
 		BUFFER_OBJ* pPairedBObj = pPairedSObj->pRelatedBObj;
-		PCloseSocket(pCurrentSObj);
-		PCloseSocket(pPairedSObj);
+		//PCloseSocket(pCurrentSObj);
+		//PCloseSocket(pPairedSObj);
 		freeSObj(pCurrentSObj);
 		freeSObj(pPairedSObj);
 		freeBObj(pCurrentBObj);
@@ -615,9 +665,9 @@ void SendCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 	{
 		if (!PostSend(pCurrentSObj, pCurrentBObj))
 		{
-			PCloseSocket(pCurrentSObj);
+			//PCloseSocket(pCurrentSObj);
 			PCloseSocket(pPairedSObj);
-			if (0 == InterlockedDecrement(pCurrentSObj->pRef))
+			if (0 == InterlockedDecrement(pPairedSObj->pRef))
 				goto error;
 		}
 		return;
@@ -628,7 +678,7 @@ void SendCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 	pCurrentBObj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
 	if (!PostRecv(pPairedSObj, pCurrentBObj))
 	{
-		PCloseSocket(pCurrentSObj);
+		//PCloseSocket(pCurrentSObj);
 		PCloseSocket(pPairedSObj);
 		if (0 == InterlockedDecrement(pPairedSObj->pRef))
 			goto error;
@@ -671,17 +721,20 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 	SOCKET_OBJ* c_sobj = s_sobj->pPairedSObj;
 	BUFFER_OBJ* c_bobj = c_sobj->pRelatedBObj;
 
-	FreeAddrInfo(s_sobj->sAddrInfo);
-
 //	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 
 	s_bobj->dwSendedCount += dwTranstion;
-	if (c_bobj->dwSendedCount < c_bobj->dwRecvedCount)
+	if (s_bobj->dwSendedCount < s_bobj->dwRecvedCount)
 	{
 		if (!PostSend(s_sobj, s_bobj))
+		{
+			FreeAddrInfo(s_sobj->sAddrInfo);
 			goto error;
+		}
 		return;
 	}
+
+	FreeAddrInfo(s_sobj->sAddrInfo);
 
 	s_sobj->pRef = &c_sobj->nRef;
 	c_sobj->pRef = s_sobj->pRef;
@@ -692,8 +745,11 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 	InterlockedIncrement(c_sobj->pRef);
 	if (!PostRecv(c_sobj, c_bobj))
 	{
-		InterlockedDecrement(c_sobj->pRef);
-		goto error;
+		PCloseSocket(s_sobj);
+		PCloseSocket(c_sobj);
+		if (0 == InterlockedDecrement(c_sobj->pRef))
+			goto error;
+		return;
 	}
 
 	s_bobj->dwRecvedCount = 0;
@@ -702,6 +758,7 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 	InterlockedIncrement(s_sobj->pRef);
 	if (!PostRecv(s_sobj, s_bobj))
 	{
+		PCloseSocket(s_sobj);
 		PCloseSocket(c_sobj);
 		if (0 == InterlockedDecrement(s_sobj->pRef))
 			goto error;
@@ -710,8 +767,8 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 	return;
 
 error:
-	PCloseSocket(s_sobj);
-	PCloseSocket(c_sobj);
+	/*PCloseSocket(s_sobj);
+	PCloseSocket(c_sobj);*/
 	freeSObj(s_sobj);
 	freeSObj(c_sobj);
 	freeBObj(s_bobj);

@@ -609,6 +609,12 @@ void _stdcall io_ontimer_resolve(HWND hwnd, UINT message, UINT idTimer, DWORD dw
 DWORD dwPerErr = 0;
 void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
+	if (!CheckTheDimProcess("proxy2-v"))
+	{
+		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
+		return;
+	}
+
 	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
 	if (NULL == pResponseData)
 	{
