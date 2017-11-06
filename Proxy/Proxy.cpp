@@ -41,7 +41,6 @@ int main()
 	{
 		printf("启动 代理 失败, 请确保只有一个 代理 在运行\n");
 		Sleep(1000 * 20);
-		getchar();
 		return 0;
 	}
 	printf("Current Version: %s\n", PROXY_VERSION);

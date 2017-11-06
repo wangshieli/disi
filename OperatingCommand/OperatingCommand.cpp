@@ -151,6 +151,13 @@ BOOL ProxyRestart()
 
 int main(int argc, char* argv[])
 {
+	if (!CheckTheOneInstance())
+	{
+		printf("启动 命令执行程序 失败, 请确保只有一个 命令在执行 在运行\n");
+		Sleep(1000 * 20);
+		return 0;
+	}
+
 	if (argc < 2)
 	{
 		printf("参数错误\n");

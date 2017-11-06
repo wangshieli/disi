@@ -58,7 +58,6 @@ int main()
 	{
 		printf("启动 监控程序 失败, 请确保只有一个 监控程序 在运行\n");
 		Sleep(1000 * 20);
-		getchar();
 		return 0;
 	}
 
@@ -77,6 +76,15 @@ int main()
 		return 0;
 
 	HANDLE hTimer = (HANDLE)_beginthreadex(NULL, 0, monitor_ontimer, NULL, 0, NULL);
+
+	WSADATA wsadata;
+	int err = 0;
+	err = WSAStartup(MAKEWORD(2, 2), &wsadata);
+	if (0 != err)
+	{
+		printf("WSAStartup failed with error: %d\n", err);
+		return 0;
+	}
 
 	do
 	{
@@ -98,6 +106,43 @@ int main()
 		strcat_s(FileName, ".exe");
 
 		bFind = CheckTheSpecifiedProcess(FileName);
+		if (bFind)
+		{
+			Sleep(1000 * 5);
+			SOCKET sock = INVALID_SOCKET;
+			err = ConnectToDisiServer(sock, "127.0.0.1", 6083);
+			if (0 != err)
+			{
+				printf("连接 管理中心6083端口 失败 error = %d\n", WSAGetLastError());
+				//continue;
+				CloseTheSpecifiedProcess(FileName);
+				bFind = FALSE;
+			}
+			else
+			{
+				DWORD nTimeOut = 5 * 1000;
+				setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+				setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+
+				if (SOCKET_ERROR == send(sock, "areyouok\r\n\r\n", strlen("areyouok\r\n\r\n") + 1, 0))
+				{
+					CloseTheSpecifiedProcess(FileName);
+					bFind = FALSE;
+				}
+				else
+				{
+					char brecv[32] = { 0 };
+					err = recv(sock, brecv, 32, 0);
+					if (SOCKET_ERROR == err || 0 == err)
+					{
+						CloseTheSpecifiedProcess(FileName);
+						bFind = FALSE;
+					}
+				}
+
+				closesocket(sock);
+			}
+		}
 
 		if (!bFind)
 			ShellExecute(0, "open", manage_path, NULL, NULL, SW_SHOWNORMAL);
@@ -105,55 +150,5 @@ int main()
 	} while (WAIT_OBJECT_0 != WaitForSingleObject(hWaitForExplorer, 1000 * 60 * 2));
 
 	getchar();
-	return 0;
-}
-
-unsigned int _stdcall hb_client(LPVOID pVoid)
-{
-	WSADATA wsadata;
-	int err = 0;
-	err = WSAStartup(MAKEWORD(2, 2), &wsadata);
-	if (0 != err)
-	{
-		printf("WSAStartup failed with error: %d\n", err);
-		return 0;
-	}
-
-	SOCKET sock = INVALID_SOCKET;
-	while (true)
-	{
-		if (INVALID_SOCKET != sock)
-		{
-			closesocket(sock);
-			sock = INVALID_SOCKET;
-		}
-
-		err = ConnectToDisiServer(sock, "127.0.0.1", 6083);
-		if (0 != err)
-		{
-			printf("连接 管理中心6083端口 失败 error = %d\n", WSAGetLastError());
-			continue;
-		}
-
-		DWORD nTimeOut = 5 * 1000;
-		setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
-		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
-
-		HANDLE hWaitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-		do
-		{
-			if (SOCKET_ERROR == send(sock, "areyouok\r\n\r\n", strlen("areyouok\r\n\r\n") + 1, 0))
-				break;
-
-			char brecv[32] = { 0 };
-			err = recv(sock, brecv, 32, 0);
-			if (SOCKET_ERROR == err || 0 == err)
-				break;
-		} while (WaitForSingleObject(hWaitEvent, 20) == WAIT_TIMEOUT);
-
-		CloseHandle(hWaitEvent);
-	}
-
 	return 0;
 }

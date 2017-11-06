@@ -108,7 +108,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
-    <TargetName>command-v0.0.4</TargetName>
+    <TargetName>command-v0.0.5</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

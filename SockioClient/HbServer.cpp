@@ -48,7 +48,11 @@ unsigned int _stdcall hb_server(LPVOID pVoid)
 		int len = sizeof(taddr);
 		sAccept = WSAAccept(sSock, (sockaddr*)&taddr, &len, NULL, NULL);
 		if (INVALID_SOCKET == sAccept)
+		{
+			printf("接收监控程序连接失败 err = %d\n", WSAGetLastError());
+			Sleep(1000 * 5);
 			continue;
+		}
 
 		DWORD nTimeOut = 5 * 1000;
 		setsockopt(sSock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
@@ -77,9 +81,7 @@ unsigned int _stdcall hb_server(LPVOID pVoid)
 			if (strstr(pRecvInfo, "\r\n\r\n") != NULL)
 			{
 				send(sAccept, "ok", 2, 0);
-				nRecvLen = 0;
-				memset(pRecvInfo, 0x00, 512);
-				//break;
+				break;
 			}
 		} while (TRUE);
 

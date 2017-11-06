@@ -98,7 +98,7 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	GetRegValue(hKey, "version", Version);
 
 	char pFilePath[MAX_PATH];
-	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", CommandFiler, Version);
+	sprintf_s(pFilePath, "%s\\command-v%s.exe", CommandFiler, Version);
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[2], "version")->valuestring;
 	if (CompareVersion(Version, pVersion) && _access(pFilePath, 0) == 0)
 	{
@@ -115,7 +115,7 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	char FormatDownUrl[MAX_PATH] = { 0 };
 	UrlFormating(pDUrl, "\\", FormatDownUrl);
 
-	sprintf_s(pFilePath, "%s\\pworkunit-v%s.exe", CommandFiler, pVersion);
+	sprintf_s(pFilePath, "%s\\command-v%s.exe", CommandFiler, pVersion);
 
 	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
 	{
@@ -153,7 +153,7 @@ BOOL PMonitor(cJSON** pAppInfo)
 	char FormatDownUrl[MAX_PATH] = { 0 };
 	UrlFormating(pDUrl, "\\", FormatDownUrl);
 
-	sprintf_s(pFilePath, "%s\\pmonitor-v%s.exe", CommandFiler, pVersion);
+	sprintf_s(pFilePath, "%s\\monitor-v%s.exe", CommandFiler, pVersion);
 
 	if (!doDownLoad(pFilePath, FormatDownUrl, pMd5))
 	{
@@ -903,7 +903,6 @@ int main()
 	{
 		printf("启动 管理中心 失败, 请确保只有一个 管理中心 在运行\n");
 		Sleep(1000 * 20);
-		getchar();
 		return 0;
 	}
 
@@ -962,6 +961,7 @@ int main()
 	//HANDLE hLogThread = (HANDLE)_beginthreadex(NULL, 0, log_thread, NULL, 0, &g_log_thread_id);
 
 	HANDLE hTimerThread = (HANDLE)_beginthreadex(NULL, 0, io_ontimer_thread, NULL, 0, NULL);
+	HANDLE hHbHandle = (HANDLE)_beginthreadex(NULL, 0, hb_server, NULL, 0, NULL);
 
 	hClientThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == hClientThreadStart)
@@ -979,7 +979,7 @@ int main()
 	PostThreadMessage(g_client_thread_id, CLIENT_RELINK, 0, 0);
 
 	Sleep(1000 * 3);
-	if (!CheckTheDimProcess("pmonitor-v"))
+	if (!CheckTheDimProcess("monitor-v"))
 	{
 		HKEY hKey = NULL;
 		PRegCreateKey(SMonitor, &hKey);
@@ -990,8 +990,6 @@ int main()
 	}
 	else if(!CheckTheDimProcess("proxy2-v"))
 		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
-
-//	HANDLE hHbHandle = (HANDLE)_beginthreadex(NULL, 0, hb_server, NULL, 0, NULL);
 
 	getchar();
 	return 0;
