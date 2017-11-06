@@ -49,6 +49,19 @@ BOOL ExcCmd(const char* cmd, char** out)
 	return TRUE;
 }
 
+BOOL CheckTheOneInstance()
+{
+	hTheOneInstance = ::OpenEvent(EVENT_ALL_ACCESS, FALSE, NP_THE_ONE_INSTANCE);
+	if (NULL != hTheOneInstance)
+		return FALSE;
+
+	hTheOneInstance = ::CreateEvent(NULL, FALSE, FALSE, NP_THE_ONE_INSTANCE);
+	if (NULL == hTheOneInstance)
+		return FALSE;
+
+	return TRUE;
+}
+
 BOOL CloseTheSpecifiedProcess(const char* ProcessName)
 {
 	HANDLE hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);

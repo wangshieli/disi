@@ -16,6 +16,9 @@ void CONNECT_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bob
 void SendReponseFailed(void* _c_sobj, void* _c_bobj);
 void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj);
 
+void RecvZeroCompFailed(void* _sobj, void* _bobj);
+void RecvZeroCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj);
+
 void RecvCompFailed(void* _sobj, void* _bobj);
 void RecvCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj);
 
@@ -24,6 +27,9 @@ void SendCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj);
 
 void GET_ConnectServerFailed(void* _s_sobj, void* _s_bobj);
 void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj);
+
+void SendRequestHeaderFailed(void* _s_sobj, void* _s_bobj);
+void SendRequestHeaderSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj);
 
 void Accept6086CompFailed(void* _lobj, void* _c_bobj);
 void Accept6086CompSuccess(DWORD dwTranstion, void* _lobj, void* _c_bobj);

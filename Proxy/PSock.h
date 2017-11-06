@@ -17,6 +17,8 @@ BOOL InitListenSock(LISTEN_OBJ* lobj, u_short port);
 // n = 0 5005     n = 1 6086
 BOOL PostAcceptEx(LISTEN_OBJ* lobj, int n);
 
+BOOL PostZeroRecv(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj);
+
 BOOL PostRecv(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj);
 
 BOOL PostSend(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj);

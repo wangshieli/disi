@@ -16,7 +16,7 @@ public:
 	WSAOVERLAPPED ol;
 	PTIoRequestFailed pfnFailed;
 	PTIoRequestSuccess pfnSuccess;
-	struct _buffer_obj *pNext, *pPrev;
+//	struct _buffer_obj *pNext, *pPrev;
 	struct _socket_obj* pRelatedSObj;
 	WSABUF wsaBuf;
 	DWORD dwRecvedCount;
@@ -29,7 +29,7 @@ public:
 		ZeroMemory(&ol, sizeof(ol));
 		pfnFailed = NULL;
 		pfnSuccess = NULL;
-		pNext = pPrev = NULL;
+	//	pNext = pPrev = NULL;
 		pRelatedSObj = NULL;
 		dwRecvedCount = 0;
 		dwSendedCount = 0;
@@ -50,7 +50,7 @@ typedef struct _buffer_obj_t
 	WSAOVERLAPPED ol;
 	PTIoRequestFailed pfnFailed;
 	PTIoRequestSuccess pfnSuccess;
-	struct _buffer_obj *pNext, *pPrev;
+//	struct _buffer_obj *pNext, *pPrev;
 	struct _socket_obj* pRelatedSObj;
 	WSABUF wsaBuf;
 	DWORD dwRecvedCount;
@@ -86,35 +86,36 @@ typedef struct _listen_obj
 {
 public:
 	SOCKET sListenSock;
-	CRITICAL_SECTION cs;
-	struct _buffer_obj* pAcceptExPendingList;
+//	CRITICAL_SECTION cs;
+//	struct _buffer_obj* pAcceptExPendingList;
 	DWORD dwAcceptExPendingCount;
 	HANDLE hPostAcceptExEvent;
 public:
 	void init()
 	{
 		sListenSock = INVALID_SOCKET;
-		InitializeCriticalSection(&cs);
-		pAcceptExPendingList = NULL;
+		//InitializeCriticalSection(&cs);
+		//pAcceptExPendingList = NULL;
 		dwAcceptExPendingCount = 0;
 		hPostAcceptExEvent = NULL;
 	}
 
 	void AddBObj2AccpetExPendingList(struct _buffer_obj* obj)
 	{
-		EnterCriticalSection(&cs);
+		/*EnterCriticalSection(&cs);
 		obj->pNext = pAcceptExPendingList;
 		if (pAcceptExPendingList)
 			pAcceptExPendingList->pPrev = obj;
 		obj->pPrev = NULL;
 		pAcceptExPendingList = obj;
 		++dwAcceptExPendingCount;
-		LeaveCriticalSection(&cs);
+		LeaveCriticalSection(&cs);*/
+		InterlockedIncrement(&dwAcceptExPendingCount);
 	}
 
 	void DeleteBObjFromAccpetExPendingList(struct _buffer_obj* obj)
 	{
-		EnterCriticalSection(&cs);
+		/*EnterCriticalSection(&cs);
 		if (obj == pAcceptExPendingList)
 		{
 			pAcceptExPendingList = pAcceptExPendingList->pNext;
@@ -128,7 +129,8 @@ public:
 				obj->pNext->pPrev = obj->pNext;
 		}
 		--dwAcceptExPendingCount;
-		LeaveCriticalSection(&cs);
+		LeaveCriticalSection(&cs);*/
+		InterlockedDecrement(&dwAcceptExPendingCount);
 	}
 }LISTEN_OBJ;
 

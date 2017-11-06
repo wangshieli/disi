@@ -39,28 +39,41 @@ using namespace std;
 
 #define LOG_MESSAGE		WM_USER + 4
 
+#define CommandFiler "C:\\Command"
+
+#ifdef BUILD_SHARE
+#define VERSION "0.0.1"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Share"
+#endif // SHARE_API
+
 #ifdef BUILD_CURL
 #define VERSION "0.0.1"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Curl"
 #endif // BUILD_CURL
 
 #ifdef BUILD_REG
 #define VERSION "0.0.1"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Reg"
 #endif // BUILD_REG
 
 #ifdef BUILD_PROXY2
 #define VERSION "0.0.4"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Proxy2"
 #endif // BUILD_PROXY2
 
 #ifdef BUILD_CONTROLLER
 #define VERSION "0.1.37"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Controller"
 #endif // BUILD_CONTROLLER
 
 #ifdef BUILD_MONITOR
 #define VERSION "0.0.1"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Monitor"
 #endif // BUILD_MONITOR
 
 #ifdef BUILD_COMMAND
 #define VERSION "0.0.4"
+#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Command"
 #endif // BUILD_COMMAND
 
 #ifdef _DEBUG
@@ -69,10 +82,9 @@ using namespace std;
 
 #define MY_ALIGN(size, boundary) (((size) + ((boundary) - 1 )) & ~((boundary) - 1))
 
-#define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event"
-#define CommandFiler "C:\\Command"
-
 BOOL ExcCmd(const char* cmd, char** out);
+
+BOOL CheckTheOneInstance();
 
 BOOL CloseTheSpecifiedProcess(const char* ProcessName);
 

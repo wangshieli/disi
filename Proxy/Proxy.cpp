@@ -37,18 +37,11 @@ CRITICAL_SECTION g_csLog;
 
 int main()
 {
-	hTheOneInstance = ::OpenEvent(EVENT_ALL_ACCESS, FALSE, NP_THE_ONE_INSTANCE);
-	if (NULL != hTheOneInstance)
+	if (!CheckTheOneInstance())
 	{
-		printf("已经有正在运行的代理，请不要重复打开代理\n");
+		printf("启动 代理 失败, 请确保只有一个 代理 在运行\n");
 		Sleep(1000 * 20);
-		return 0;
-	}
-	hTheOneInstance = ::CreateEvent(NULL, FALSE, FALSE, NP_THE_ONE_INSTANCE);
-	if (NULL == hTheOneInstance)
-	{
-		printf("代理启动失败\n");
-		Sleep(1000 * 5);
+		getchar();
 		return 0;
 	}
 	printf("Current Version: %s\n", PROXY_VERSION);
@@ -87,7 +80,7 @@ int main()
 	SYSTEM_INFO sys;
 	GetSystemInfo(&sys);
 	DWORD dwNumberOfCPU = sys.dwNumberOfProcessors;
-	g_dwPageSize = sys.dwPageSize * 2;
+	g_dwPageSize = sys.dwPageSize;
 
 #ifdef _DEBUG
 	printf("dwNumberOfProcessors = %d\n", sys.dwNumberOfProcessors);
@@ -166,7 +159,6 @@ int main()
 #endif // PROXY_DEBUG
 
 	HANDLE hLogThread = (HANDLE)_beginthreadex(NULL, 0, log_thread, NULL, 0, &g_log_thread_id);
-	HANDLE h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode_6085, NULL, 0, NULL);
 
 	g_hSwitchThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == g_hSwitchThreadStart)
@@ -192,6 +184,7 @@ int main()
 		goto error;
 	}
 
+	HANDLE h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode_6085, NULL, 0, NULL);
 	WaitForSingleObject(hSwitchThread, 1000 * 30);
 	HANDLE hTimerThread = (HANDLE)_beginthreadex(NULL, 0, ontimer_thread, NULL, 0, NULL);
 
@@ -463,9 +456,12 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 				PostAcceptEx(LSock_Array[i], i);
 			}
 
-			/*if (LSock_Array[i]->dwAcceptExPendingCount > 180)
+			if (LSock_Array[i]->dwAcceptExPendingCount > 300)
 			{
-				vFreeBuffer.clear();
+				if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+					continue;
+				PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
+				/*vFreeBuffer.clear();
 				int optlen,
 					optval;
 				optlen = sizeof(optval);
@@ -492,8 +488,8 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 
 				size_t nsize = vFreeBuffer.size();
 				for (size_t i = 0; i < nsize; i++)
-					PCloseSocket(vFreeBuffer[i]->pRelatedSObj);
-			}*/
+					PCloseSocket(vFreeBuffer[i]->pRelatedSObj);*/
+			}
 		}
 	}
 
@@ -981,6 +977,7 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 		if (WSAEADDRINUSE == WSAGetLastError())
 			printf("6085端口被占用\n");
 		
+		closesocket(g_6085socket);
 		goto error;
 	}
 
@@ -1005,10 +1002,8 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 		do
 		{
 			if (nRecvLen >= nInfoTotalLen)
-			{
-				free(pRecv6085Info);
-				continue;
-			}
+				break;
+			
 			err = recv(sAccept, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
 			if (err > 0)
 				nRecvLen += err;
@@ -1017,7 +1012,7 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 				if (SOCKET_ERROR == err)
 				{
 					printf("6085端口在使用中出现错误 error = %d\n", WSAGetLastError());
-					return 0;
+					break;
 				}
 			}
 
@@ -1026,6 +1021,7 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 		} while (TRUE);
 
 		printf("6085请求数据: %s\n", pRecv6085Info);
+		free(pRecv6085Info);
 
 		send(sAccept, "ok", 3, 0);
 

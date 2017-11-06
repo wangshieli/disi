@@ -60,6 +60,9 @@
     <ClCompile Include="..\PPPOE_Dial\PPPOEDial.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="HbServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sockio\internal\sio_client_impl.h">
@@ -87,6 +90,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="base64.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HbServer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

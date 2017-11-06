@@ -54,6 +54,14 @@ unsigned int _stdcall monitor_ontimer(LPVOID pVoid)
 
 int main()
 {
+	if (!CheckTheOneInstance())
+	{
+		printf("启动 监控程序 失败, 请确保只有一个 监控程序 在运行\n");
+		Sleep(1000 * 20);
+		getchar();
+		return 0;
+	}
+
 	HANDLE hWaitForExplorer = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 	WaitForSingleObject(hWaitForExplorer, 1000 * 5);
 	CloseTheSpecifiedProcess("explorer.exe");
@@ -97,5 +105,55 @@ int main()
 	} while (WAIT_OBJECT_0 != WaitForSingleObject(hWaitForExplorer, 1000 * 60 * 2));
 
 	getchar();
+	return 0;
+}
+
+unsigned int _stdcall hb_client(LPVOID pVoid)
+{
+	WSADATA wsadata;
+	int err = 0;
+	err = WSAStartup(MAKEWORD(2, 2), &wsadata);
+	if (0 != err)
+	{
+		printf("WSAStartup failed with error: %d\n", err);
+		return 0;
+	}
+
+	SOCKET sock = INVALID_SOCKET;
+	while (true)
+	{
+		if (INVALID_SOCKET != sock)
+		{
+			closesocket(sock);
+			sock = INVALID_SOCKET;
+		}
+
+		err = ConnectToDisiServer(sock, "127.0.0.1", 6083);
+		if (0 != err)
+		{
+			printf("连接 管理中心6083端口 失败 error = %d\n", WSAGetLastError());
+			continue;
+		}
+
+		DWORD nTimeOut = 5 * 1000;
+		setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+		setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&nTimeOut, sizeof(DWORD));
+
+		HANDLE hWaitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		do
+		{
+			if (SOCKET_ERROR == send(sock, "areyouok\r\n\r\n", strlen("areyouok\r\n\r\n") + 1, 0))
+				break;
+
+			char brecv[32] = { 0 };
+			err = recv(sock, brecv, 32, 0);
+			if (SOCKET_ERROR == err || 0 == err)
+				break;
+		} while (WaitForSingleObject(hWaitEvent, 20) == WAIT_TIMEOUT);
+
+		CloseHandle(hWaitEvent);
+	}
+
 	return 0;
 }

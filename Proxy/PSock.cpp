@@ -203,6 +203,23 @@ error:
 	return FALSE;
 }
 
+BOOL PostZeroRecv(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj)
+{
+	DWORD dwBytes = 0,
+		dwFlags = 0;
+
+	int err = 0;
+
+	_bobj->wsaBuf.buf = NULL;
+	_bobj->wsaBuf.len = 0;
+
+	err = WSARecv(_sobj->sock, &_bobj->wsaBuf, 1, &dwBytes, &dwFlags, &_bobj->ol, NULL);
+	if (SOCKET_ERROR == err && WSA_IO_PENDING != WSAGetLastError())
+		return FALSE;
+
+	return TRUE;
+}
+
 BOOL PostRecv(SOCKET_OBJ* _sobj, BUFFER_OBJ* _bobj)
 {
 	DWORD dwBytes = 0,

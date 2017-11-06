@@ -10,6 +10,8 @@
 #include "aes.h"
 #include "sockio\sio_client.h"
 
+#include "HbServer.h"
+
 #pragma warning(disable:4996)
 
 #define SOCKET_IO_VERSION ("socketio-v"##VERSION)
@@ -897,6 +899,14 @@ error:
 
 int main()
 {
+	if (!CheckTheOneInstance())
+	{
+		printf("启动 管理中心 失败, 请确保只有一个 管理中心 在运行\n");
+		Sleep(1000 * 20);
+		getchar();
+		return 0;
+	}
+
 	if (!GetAdslInfo(g_AdslIp))
 		DoAdsl();
 
@@ -968,8 +978,20 @@ int main()
 	WaitForSingleObject(hClientThreadStart, INFINITE);
 	PostThreadMessage(g_client_thread_id, CLIENT_RELINK, 0, 0);
 
-	if (!CheckTheDimProcess("proxy2-v"))
+	Sleep(1000 * 3);
+	if (!CheckTheDimProcess("pmonitor-v"))
+	{
+		HKEY hKey = NULL;
+		PRegCreateKey(SMonitor, &hKey);
+		char pFilePath[MAX_PATH];
+		GetRegValue(hKey, "path", pFilePath);
+		RegCloseKey(hKey);
+		ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
+	}
+	else if(!CheckTheDimProcess("proxy2-v"))
 		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
+
+//	HANDLE hHbHandle = (HANDLE)_beginthreadex(NULL, 0, hb_server, NULL, 0, NULL);
 
 	getchar();
 	return 0;

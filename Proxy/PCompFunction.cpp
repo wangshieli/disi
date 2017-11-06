@@ -135,12 +135,18 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 
 	int nUrlHostLen = pUrlEnd - c_bobj->data - nLen - HTTP_TAG_LEN;
 	memcpy(UrlHost, c_bobj->data + nLen + HTTP_TAG_LEN, nUrlHostLen);
-	if (strstr(UrlHost, "ait183.analysys.cn") != NULL)
-		goto error;
 
 #ifndef PROXY_DEBUG
 	ShowLog(c_bobj->data, pUrlEnd - c_bobj->data);
 #endif // PROXY_DEBUG
+
+	// 避免 ait182.analysys.cn:8089 HTTP/ 类似的情况
+	char* pSpace = strstr(UrlHost, " ");
+	if (NULL != pSpace)
+	{
+		*pSpace = '\0';
+		nUrlHostLen = pSpace - UrlHost;
+	}
 
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
 	if (NULL != pUrlPortStartPoint)
@@ -244,7 +250,7 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 	s_sobj->sAddrInfo = sAddrInfo;
 	c_bobj->SetIoRequestFunction(GET_ConnectServerFailed, GET_ConnectServerSuccess);
 	DWORD dwBytes = 0;
-	if (!lpfnConnectEx(s_sobj->sock, (sockaddr*)sAddrInfo->ai_addr, sAddrInfo->ai_addrlen, c_bobj->data, c_bobj->dwRecvedCount, &dwBytes, &c_bobj->ol))
+	if (!lpfnConnectEx(s_sobj->sock, (sockaddr*)sAddrInfo->ai_addr, sAddrInfo->ai_addrlen, /*c_bobj->data*/NULL, /*c_bobj->dwRecvedCount*/0, &dwBytes, &c_bobj->ol))
 	{
 		if (WSA_IO_PENDING != WSAGetLastError())
 			goto error;
@@ -272,7 +278,7 @@ error:
 
 void ParsingRequestHeader(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 {
-#ifndef PROXY_DEBUG
+#ifdef PROXY_DEBUG
 	ShowLog(c_bobj->data, c_bobj->dwRecvedCount);
 #endif // !PROXY_DEBUG
 
@@ -514,11 +520,9 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 	s_sobj->pRef = &c_sobj->nRef;
 	c_sobj->pRef = s_sobj->pRef;
 
-	c_bobj->dwRecvedCount = 0;
-	c_bobj->dwSendedCount = 0;
-	c_bobj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
+	c_bobj->SetIoRequestFunction(RecvZeroCompFailed, RecvZeroCompSuccess);
 	InterlockedIncrement(c_sobj->pRef);
-	if (!PostRecv(c_sobj, c_bobj))
+	if (!PostZeroRecv(c_sobj, c_bobj))
 	{
 		PCloseSocket(c_sobj);
 		PCloseSocket(s_sobj);
@@ -527,11 +531,9 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 		return;
 	}
 
-	s_bobj->dwRecvedCount = 0;
-	s_bobj->dwSendedCount = 0;
-	s_bobj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
+	s_bobj->SetIoRequestFunction(RecvZeroCompFailed, RecvZeroCompSuccess);
 	InterlockedIncrement(s_sobj->pRef);
-	if (!PostRecv(s_sobj, s_bobj))
+	if (!PostZeroRecv(s_sobj, s_bobj))
 	{
 		PCloseSocket(s_sobj);
 		PCloseSocket(c_sobj);
@@ -549,6 +551,63 @@ error:
 	freeBObj(s_bobj);
 	freeBObj(c_bobj);
 	return;
+}
+
+void RecvZeroCompFailed(void* _sobj, void* _bobj)
+{
+	SOCKET_OBJ* pCurrentSObj = (SOCKET_OBJ*)_sobj;
+
+#ifdef _DEBUG
+	DWORD dwTranstion = 0;
+	DWORD dwFlags = 0;
+	if (!WSAGetOverlappedResult(pCurrentSObj->sock, &((BUFFER_OBJ*)_bobj)->ol, &dwTranstion, FALSE, &dwFlags))
+		printf("RecvCompFailed error: %d\n", WSAGetLastError());
+#endif // _DEBUG
+
+	//shutdown(pCurrentSObj->sock, SD_BOTH);
+	//shutdown(pPairedSObj->sock, SD_BOTH);
+	PCloseSocket(pCurrentSObj);
+
+	if (0 == InterlockedDecrement(pCurrentSObj->pRef))
+	{
+		SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
+		BUFFER_OBJ* pCurrentBObj = pCurrentSObj->pRelatedBObj;
+		BUFFER_OBJ* pPairedBObj = pPairedSObj->pRelatedBObj;
+		//PCloseSocket(pCurrentSObj);
+		//PCloseSocket(pPairedSObj);
+		freeSObj(pCurrentSObj);
+		freeSObj(pPairedSObj);
+		freeBObj(pCurrentBObj);
+		freeBObj(pPairedBObj);
+	}
+}
+
+void RecvZeroCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
+{
+	SOCKET_OBJ* pCurrentSObj = (SOCKET_OBJ*)_sobj;
+	BUFFER_OBJ* pCurrentBObj = (BUFFER_OBJ*)_bobj;
+
+	pCurrentBObj->dwRecvedCount = 0;
+	pCurrentBObj->dwSendedCount = 0;
+	pCurrentBObj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
+	if (!PostRecv(pCurrentSObj, pCurrentBObj))
+	{
+		PCloseSocket(pCurrentSObj);
+		if (0 == InterlockedDecrement(pCurrentSObj->pRef))
+			goto error;
+	}
+
+	return;
+
+error:
+	SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
+	BUFFER_OBJ* pPairedBObj = pPairedSObj->pRelatedBObj;
+	//PCloseSocket(pCurrentSObj);
+	//PCloseSocket(pPairedSObj);
+	freeSObj(pCurrentSObj);
+	freeSObj(pPairedSObj);
+	freeBObj(pCurrentBObj);
+	freeBObj(pPairedBObj);
 }
 
 void RecvCompFailed(void* _sobj, void* _bobj)
@@ -597,7 +656,7 @@ void RecvCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 	pCurrentBObj->SetIoRequestFunction(SendCompFailed, SendCompSuccess);
 
 #ifdef PROXY_DEBUG
-	ShowLog(pCurrentBObj->data, pCurrentBObj->dwRecvedCount);
+//	ShowLog(pCurrentBObj->data, pCurrentBObj->dwRecvedCount);
 #endif // PROXY_DEBUG
 
 	SOCKET_OBJ* pPairedSObj = pCurrentSObj->pPairedSObj;
@@ -673,10 +732,8 @@ void SendCompSuccess(DWORD dwTransion, void* _sobj, void* _bobj)
 		return;
 	}
 
-	pCurrentBObj->dwRecvedCount = 0;
-	pCurrentBObj->dwSendedCount = 0;
-	pCurrentBObj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
-	if (!PostRecv(pPairedSObj, pCurrentBObj))
+	pCurrentBObj->SetIoRequestFunction(RecvZeroCompFailed, RecvZeroCompSuccess);
+	if (!PostZeroRecv(pPairedSObj, pCurrentBObj))
 	{
 		//PCloseSocket(pCurrentSObj);
 		PCloseSocket(pPairedSObj);
@@ -713,37 +770,74 @@ void GET_ConnectServerFailed(void* _s_sobj, void* _s_bobj)
 
 void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 {
+	SOCKET_OBJ* s_sobj = (SOCKET_OBJ*)_s_sobj;
+	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
+
+	FreeAddrInfo(s_sobj->sAddrInfo);
+
+//	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+
+	s_bobj->SetIoRequestFunction(SendRequestHeaderFailed, SendRequestHeaderSuccess);
+	if (!PostSend(s_sobj, s_bobj))
+		goto error;
+
+	return;
+
+error:
+	SOCKET_OBJ* c_sobj = s_sobj->pPairedSObj;
+	BUFFER_OBJ* c_bobj = c_sobj->pRelatedBObj;
+	PCloseSocket(s_sobj);
+	PCloseSocket(c_sobj);
+	freeSObj(s_sobj);
+	freeSObj(c_sobj);
+	freeBObj(s_bobj);
+	freeBObj(c_bobj);
+	return;
+}
+
+void SendRequestHeaderFailed(void* _s_sobj, void* _s_bobj)
+{
+	SOCKET_OBJ* s_sobj = (SOCKET_OBJ*)_s_sobj;
+	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
+	SOCKET_OBJ* c_sobj = s_sobj->pPairedSObj;
+	BUFFER_OBJ* c_bobj = c_sobj->pRelatedBObj;
+
+	PCloseSocket(s_sobj);
+	PCloseSocket(c_sobj);
+	freeSObj(s_sobj);
+	freeSObj(c_sobj);
+	freeBObj(s_bobj);
+	freeBObj(c_bobj);
+}
+
+void SendRequestHeaderSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
+{
 	if (dwTranstion <= 0)
-		return GET_ConnectServerFailed(_s_sobj, _s_bobj);
+		return SendRequestHeaderFailed(_s_sobj, _s_bobj);
 
 	SOCKET_OBJ* s_sobj = (SOCKET_OBJ*)_s_sobj;
 	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
 	SOCKET_OBJ* c_sobj = s_sobj->pPairedSObj;
 	BUFFER_OBJ* c_bobj = c_sobj->pRelatedBObj;
 
-//	setsockopt(s_sobj->sock, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-
 	s_bobj->dwSendedCount += dwTranstion;
 	if (s_bobj->dwSendedCount < s_bobj->dwRecvedCount)
 	{
 		if (!PostSend(s_sobj, s_bobj))
 		{
-			FreeAddrInfo(s_sobj->sAddrInfo);
+			PCloseSocket(s_sobj);
+			PCloseSocket(c_sobj);
 			goto error;
 		}
 		return;
 	}
 
-	FreeAddrInfo(s_sobj->sAddrInfo);
-
 	s_sobj->pRef = &c_sobj->nRef;
 	c_sobj->pRef = s_sobj->pRef;
 
-	c_bobj->dwRecvedCount = 0;
-	c_bobj->dwSendedCount = 0;
-	c_bobj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
+	c_bobj->SetIoRequestFunction(RecvZeroCompFailed, RecvZeroCompSuccess);
 	InterlockedIncrement(c_sobj->pRef);
-	if (!PostRecv(c_sobj, c_bobj))
+	if (!PostZeroRecv(c_sobj, c_bobj))
 	{
 		PCloseSocket(s_sobj);
 		PCloseSocket(c_sobj);
@@ -752,11 +846,9 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 		return;
 	}
 
-	s_bobj->dwRecvedCount = 0;
-	s_bobj->dwSendedCount = 0;
-	s_bobj->SetIoRequestFunction(RecvCompFailed, RecvCompSuccess);
+	s_bobj->SetIoRequestFunction(RecvZeroCompFailed, RecvZeroCompSuccess);
 	InterlockedIncrement(s_sobj->pRef);
-	if (!PostRecv(s_sobj, s_bobj))
+	if (!PostZeroRecv(s_sobj, s_bobj))
 	{
 		PCloseSocket(s_sobj);
 		PCloseSocket(c_sobj);
@@ -767,13 +859,10 @@ void GET_ConnectServerSuccess(DWORD dwTranstion, void* _s_sobj, void* _s_bobj)
 	return;
 
 error:
-	/*PCloseSocket(s_sobj);
-	PCloseSocket(c_sobj);*/
 	freeSObj(s_sobj);
 	freeSObj(c_sobj);
 	freeBObj(s_bobj);
 	freeBObj(c_bobj);
-	return;
 }
 
 void Accept6086CompFailed(void* _lobj, void* _c_bobj)
