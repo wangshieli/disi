@@ -58,7 +58,11 @@ int main()
 	vector<BUFFER_OBJ*> vFreeBuffer;
 
 	if (!GetClient_id(&g_pClient_id))
-		goto error;
+	{
+		printf("请确认client_id配置是否正确\n");
+		getchar();
+		return 0;
+	}
 	if (NULL == g_pClient_id || strcmp(g_pClient_id, "") == 0)
 	{
 		printf("读取client_id.txt错误，确定是否配置此文件\n");

@@ -241,6 +241,14 @@ int main(int argc, char* argv[])
 	else if (strcmp(argv[1], "chrome_check") == 0)
 	{
 		InstallChrome();
+
+		if (!CheckTheDimProcess("proxy2-v"))
+		{
+			if (!ProxyRestart())
+			{
+				DowndProxy();
+			}
+		}
 	}
 
 	return 0;

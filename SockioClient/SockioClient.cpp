@@ -608,6 +608,8 @@ void _stdcall io_ontimer_resolve(HWND hwnd, UINT message, UINT idTimer, DWORD dw
 	sockaddr_in *p = (sockaddr_in*)pAddrInfo->ai_addr;
 	char* pip = inet_ntoa(p->sin_addr);
 	sprintf_s(ResolveIp, "https://%s:443/", pip);
+	url_b = ResolveIp;
+	url_a = SOCKET_IO_URL;
 }
 
 DWORD dwPerErr = 0;
@@ -755,7 +757,7 @@ unsigned int _stdcall io_ontimer_thread(void* pVoid)
 	PeekMessage(&msg, NULL, WM_USER, WM_USER, PM_NOREMOVE);
 
 	SetTimer(NULL, 1, 1000 * 60 * 10, io_ontimer_checkversion);
-	SetTimer(NULL, 2, 1000 * 60 * 60 * 3, io_ontimer_resolve);
+	SetTimer(NULL, 2, 1000 * 60 * 60 * 6, io_ontimer_resolve);
 	SetTimer(NULL, 3, 1000 * 60 * 2, io_ontimer_checkproxy);
 
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -968,6 +970,7 @@ int main()
 	if (!GetClient_id(&g_pClient_id))
 	{
 		printf("ªÒ»°client_id ß∞‹\n");
+		getchar();
 		return 0;
 	}
 	
@@ -1032,8 +1035,10 @@ int main()
 		RegCloseKey(hKey);
 		ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
 	}
-	if(!CheckTheDimProcess("proxy2-v"))
-		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
+
+	// chrome_check
+	//if(!CheckTheDimProcess("proxy2-v"))
+	ShellExecute(NULL, "open", CommandPath, "chrome_check", NULL, SW_SHOWNORMAL);
 
 	getchar();
 	return 0;
