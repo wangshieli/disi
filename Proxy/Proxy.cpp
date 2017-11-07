@@ -31,9 +31,9 @@ SOCKET g_6085socket = INVALID_SOCKET;
 
 HANDLE g_hMode2ThreadStart = NULL;
 
-#ifdef _DEBUG
-CRITICAL_SECTION g_csLog;
-#endif // _DEBUG
+#if SHOW_HIDE_EXE
+#pragma comment(linker, "/subsystem:windows /entry:mainCRTStartup")
+#endif
 
 int main()
 {
@@ -100,10 +100,6 @@ int main()
 
 	g_hMode2ThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	g_h5005Event = CreateEvent(NULL, FALSE, FALSE, NULL);
-
-#ifdef _DEBUG
-	InitializeCriticalSection(&g_csLog);
-#endif // _DEBUG
 
 	g_hDoingNetWork = CreateEvent(NULL, FALSE, TRUE, NULL);
 	if (NULL == g_hDoingNetWork)
@@ -183,6 +179,7 @@ int main()
 		goto error;
 	}
 
+	WaitForSingleObject(hSwitchThread, 1000 * 5);
 	HANDLE h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode_6085, NULL, 0, NULL);
 	WaitForSingleObject(hSwitchThread, 1000 * 30);
 	HANDLE hTimerThread = (HANDLE)_beginthreadex(NULL, 0, ontimer_thread, NULL, 0, NULL);
@@ -460,6 +457,7 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 				if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
 					continue;
 				PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
+				return 0;
 				/*vFreeBuffer.clear();
 				int optlen,
 					optval;
@@ -510,7 +508,7 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 	if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
 		return;
 
-	if (!ProcessAutoUpdate("host-proxy2", "proxy2.exe"))
+	if (!ProcessAutoUpdate("host-proxy2", "proxy2.exe", "upgrade_proxy2.exe"))
 		printf("升级 proxy2 失败\n");
 
 	SetEvent(g_hDoingNetWork);
@@ -959,79 +957,117 @@ int CALLBACK AcceptCondition(LPWSABUF lpCallerId, LPWSABUF,
 	return CF_ACCEPT;
 }
 
+BOOL ProxySelfRestart()
+{
+	HKEY hKey;
+	if (!PRegCreateKey(SProxy, &hKey))
+		return FALSE;
+
+	char proxy_path[MAX_PATH];
+	if (!GetRegValue(hKey, "path", proxy_path))
+	{
+		RegCloseKey(hKey);
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+
+	if (NULL != hTheOneInstance)
+		CloseHandle(hTheOneInstance);
+
+	ShellExecute(0, "open", proxy_path, NULL, NULL, SW_SHOWNORMAL);
+	ExitProcess(0);
+	return TRUE;
+}
+
 unsigned int _stdcall mode_6085(LPVOID pVoid)
 {
-	int err = 0;
-	g_6085socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (INVALID_SOCKET == g_6085socket)
-		goto error;
-
-	struct sockaddr_in addr;
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(6085);
-	addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (SOCKET_ERROR == bind(g_6085socket, (sockaddr*)&addr, sizeof(addr)) ||
-		SOCKET_ERROR == listen(g_6085socket, 1))
+	do
 	{
-		if (WSAEADDRINUSE == WSAGetLastError())
-			printf("6085端口被占用\n");
-		
-		closesocket(g_6085socket);
-		goto error;
-	}
-
-	SOCKET sAccept = INVALID_SOCKET;
-	while (true)
-	{
-		if (INVALID_SOCKET != sAccept)
+		int err = 0;
+		if (INVALID_SOCKET != g_6085socket)
 		{
-			closesocket(sAccept);
-			sAccept = INVALID_SOCKET;
+			closesocket(g_6085socket);
+			g_6085socket = INVALID_SOCKET;
+			Sleep(1000 * 5);
 		}
-		struct sockaddr_in taddr;
-		int len = sizeof(taddr);
-		sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, AcceptCondition, NULL);
-		if (INVALID_SOCKET == sAccept)
-			continue;
-
-		int nRecvLen = 0;
-		int nInfoTotalLen = 512;
-		char* pRecv6085Info = (char*)malloc(512);
-		memset(pRecv6085Info, 0x00, 512);
-		do
+		g_6085socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (INVALID_SOCKET == g_6085socket)
 		{
-			if (nRecvLen >= nInfoTotalLen)
-				break;
-			
-			err = recv(sAccept, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
-			if (err > 0)
-				nRecvLen += err;
-			else
+			printf("6085端口初始化失败 err = %d\n", WSAGetLastError());
+			Sleep(5000);
+			continue;
+		}
+
+		struct sockaddr_in addr;
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(6085);
+		addr.sin_addr.s_addr = htonl(INADDR_ANY);
+		if (SOCKET_ERROR == bind(g_6085socket, (sockaddr*)&addr, sizeof(addr)) ||
+			SOCKET_ERROR == listen(g_6085socket, 1))
+		{
+			if (WSAEADDRINUSE == WSAGetLastError())
+				printf("6085端口初始化失败,端口已经被占用,5s后重启代理\n");
+
+			Sleep(5000);
+			ProxySelfRestart();
+			continue;
+		}
+
+		SOCKET sAccept = INVALID_SOCKET;
+		while (true)
+		{
+			if (INVALID_SOCKET != sAccept)
 			{
-				if (SOCKET_ERROR == err)
-				{
-					printf("6085端口在使用中出现错误 error = %d\n", WSAGetLastError());
-					break;
-				}
+				closesocket(sAccept);
+				sAccept = INVALID_SOCKET;
+			}
+			struct sockaddr_in taddr;
+			int len = sizeof(taddr);
+			sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, AcceptCondition, NULL);
+			if (INVALID_SOCKET == sAccept)
+			{
+				err = WSAGetLastError();
+				if (err == 10061)
+					continue;
+				printf("接收插件连接失败, err = %d\n", err);
+				break;
 			}
 
-			if (strstr(pRecv6085Info, "\r\n\r\n") != NULL)
-				break;
-		} while (TRUE);
+			int nRecvLen = 0;
+			int nInfoTotalLen = 512;
+			char* pRecv6085Info = (char*)malloc(512);
+			memset(pRecv6085Info, 0x00, 512);
+			do
+			{
+				if (nRecvLen >= nInfoTotalLen)
+					break;
 
-		printf("6085请求数据: %s\n", pRecv6085Info);
-		free(pRecv6085Info);
+				err = recv(sAccept, pRecv6085Info + nRecvLen, nInfoTotalLen - nRecvLen, 0);
+				if (err > 0)
+					nRecvLen += err;
+				else
+				{
+					if (SOCKET_ERROR == err)
+					{
+						printf("接收插件发送的重播请求失败 err = %d\n", WSAGetLastError());
+						break;
+					}
+				}
 
-		send(sAccept, "ok", 3, 0);
+				if (strstr(pRecv6085Info, "\r\n\r\n") != NULL)
+					break;
+			} while (TRUE);
+			
+			printf("6085请求数据: %s\n", pRecv6085Info);
+			free(pRecv6085Info);
 
-		WaitForSingleObject(g_hDoingNetWork, INFINITE);
-		PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
-	}
+			send(sAccept, "ok", 3, 0);
 
-	return 0;
-
-error:
-	WaitForSingleObject(g_hDoingNetWork, INFINITE);
-	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+			WaitForSingleObject(g_hDoingNetWork, INFINITE);
+			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+		}
+	} while (true);
+	
 	return 0;
 }

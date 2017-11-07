@@ -2,7 +2,9 @@
 #include "../RegistryOperation/RegistryOperation.h"
 #include "../CurlClient/CurlClient.h"
 
-//#pragma comment(linker, "/subsystem:windows /entry:mainCRTStartup")
+#if SHOW_HIDE_EXE
+#pragma comment(linker, "/subsystem:windows /entry:mainCRTStartup")
+#endif
 
 BOOL RegMsconfig()
 {
@@ -30,7 +32,7 @@ BOOL RegMsconfig()
 
 void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
-	ProcessAutoUpdate("proxy-monitor", "monitor.exe");
+	ProcessAutoUpdate("proxy-monitor", "monitor.exe", "upgrade_monitor.exe");
 }
 
 unsigned int _stdcall monitor_ontimer(LPVOID pVoid)
@@ -69,7 +71,7 @@ int main()
 	WaitForSingleObject(hWaitForExplorer, 1000 * 3);
 	WinExec("rundll32.exe user32.dll LockWorkStation", SW_NORMAL);
 
-	if (!RegselfInfo(SMonitor) && RegMsconfig())
+	if (!RegselfInfo(SMonitor) || !RegMsconfig())
 		return 0;
 
 	if (!GetClient_id(&g_pClient_id))

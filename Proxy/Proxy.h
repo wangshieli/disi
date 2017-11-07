@@ -137,10 +137,6 @@ public:
 extern HANDLE hCompPort;
 extern DWORD g_dwPageSize;
 
-#ifdef _DEBUG
-extern CRITICAL_SECTION g_csLog;
-#endif // _DEBUG
-
 extern LISTEN_OBJ* LSock_Array[];
 extern HANDLE hEvent_Array[];
 extern DWORD g_dwListenPortCount;

@@ -337,7 +337,7 @@ BOOL CheckProxyIsNetworking(const char* ProxyIp, u_short ProxyPort)
 	return TRUE;
 }
 
-BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName)
+BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeName)
 {
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
 	if (CompareVersion(VERSION, pVersion))
@@ -348,7 +348,7 @@ BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName)
 	char szTempPath[MAX_PATH];
 	int nTempLen = GetTempPath(MAX_PATH, szTempPath);
 	_makepath_s(szProxyPath, NULL, szTempPath, pModeName, NULL);
-	_makepath_s(szUpgradePath, NULL, szTempPath, "upgrade.exe", NULL);
+	_makepath_s(szUpgradePath, NULL, szTempPath, pUpgradeName, NULL);
 
 	char* pProxyUrl = cJSON_GetObjectItem(pAppInfo[0], "update_url")->valuestring;
 	char* pUpgradeUrl = cJSON_GetObjectItem(pAppInfo[1], "update_url")->valuestring;
@@ -384,7 +384,7 @@ BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName)
 	return TRUE;
 }
 
-BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName)
+BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName, const char* pUpgradeName)
 {
 	CurlResponseData* pResponseData = (CurlResponseData*)malloc(sizeof(CurlResponseData));
 	if (NULL == pResponseData)
@@ -407,7 +407,10 @@ BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName)
 		printf("获取版本信息失败\n");
 		goto error;
 	}
+
+#ifdef PROXY_DEBUG
 	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+#endif // PROXY_DEBUG
 
 	// 解析数据
 	root = cJSON_Parse(pResponseData->pData);
@@ -457,7 +460,7 @@ BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName)
 		goto error;
 	}
 
-	if (!AutoUpdate(app_info, pModeName))
+	if (!AutoUpdate(app_info, pModeName, pUpgradeName))
 	{
 		printf("升级 %s 失败\n", pCode);
 		goto error;

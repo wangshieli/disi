@@ -86,7 +86,7 @@ void RunClear(const char* _username, const char* _password)
 		free(pInfo);
 		pInfo = NULL;
 	}
-	ShellExecute(0, "open", "C:/Clear.bat", NULL, NULL, SW_SHOWNORMAL);
+//	ShellExecute(0, "open", "C:/Clear.bat", NULL, NULL, SW_SHOWNORMAL);
 }
 
 BOOL PWorkUnit(cJSON** pAppInfo)
@@ -192,7 +192,9 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		printf("获取版本信息失败\n");
 		goto error;
 	}
+#ifdef PROXY_DEBUG
 	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+#endif // PROXY_DEBUG
 
 	// 解析数据
 	root = cJSON_Parse(pResponseData->pData);
@@ -254,7 +256,7 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		goto error;
 	}
 
-	if (!AutoUpdate(app_info, "controller.exe"))
+	if (!AutoUpdate(app_info, "controller.exe", "upgrade_controller.exe"))
 	{
 		printf("升级controller程序失败\n");
 		goto error;
@@ -611,6 +613,8 @@ void _stdcall io_ontimer_resolve(HWND hwnd, UINT message, UINT idTimer, DWORD dw
 DWORD dwPerErr = 0;
 void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
+	SYSTEMTIME sys;
+	GetLocalTime(&sys);
 	if (!CheckTheDimProcess("proxy2-v"))
 	{
 		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
@@ -637,7 +641,9 @@ void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD
 		printf("获取代理上报信息失败\n");
 		return;
 	}
+#ifdef PROXY_DEBUG
 	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+#endif // PROXY_DEBUG
 
 	char Ip[16] = { 0 };
 	u_short Port = 0;
@@ -682,23 +688,57 @@ void _stdcall io_ontimer_checkproxy(HWND hwnd, UINT message, UINT idTimer, DWORD
 
 	if (!CheckProxyIsNetworking(Ip, Port))
 	{
-		printf("通过代理访问www.baidu.com失败\n");
+		printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+			sys.wYear,
+			sys.wMonth,
+			sys.wDay,
+			sys.wHour,
+			sys.wMinute,
+			sys.wSecond,
+			"通过代理访问www.baidu.com失败");
 		if (CheckIsNetWorking())
 		{
-			printf("电脑能上网\n");
 			if (0 != dwPerErr)
 			{
 				DWORD dwCurrent = GetTickCount();
 				if ((dwCurrent - dwPerErr) > 1000 * 60 * 3)
 				{
-					printf("代理进程错误，重启代理");
+					printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+						sys.wYear,
+						sys.wMonth,
+						sys.wDay,
+						sys.wHour,
+						sys.wMinute,
+						sys.wSecond,
+						"代理联网失败,重启代理");
 					ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
 				}
 			}
 			else
+			{
+				printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+					sys.wYear,
+					sys.wMonth,
+					sys.wDay,
+					sys.wHour,
+					sys.wMinute,
+					sys.wSecond,
+					"电脑不能上网,等待2分钟重试");
 				dwPerErr = GetTickCount();
+			}
 		}
 		return;
+	}
+	else
+	{
+		printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+			sys.wYear,
+			sys.wMonth,
+			sys.wDay,
+			sys.wHour,
+			sys.wMinute,
+			sys.wSecond, 
+			"通过代理访问www.baidu.com成功");
 	}
 	dwPerErr = 0;
 	return;
@@ -837,7 +877,11 @@ void InitMsconfig(BOOL bInit)
 		printf("获取版本信息失败\n");
 		goto error;
 	}
+
+#ifdef PROXY_DEBUG
 	printf("GET请求返回的信息: %s\n", pResponseData->pData);
+#endif // PROXY_DEBUG
+
 	root = cJSON_Parse(pResponseData->pData);
 	if (NULL == root)
 		goto error;
@@ -988,7 +1032,7 @@ int main()
 		RegCloseKey(hKey);
 		ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
 	}
-	else if(!CheckTheDimProcess("proxy2-v"))
+	if(!CheckTheDimProcess("proxy2-v"))
 		ShellExecute(NULL, "open", CommandPath, "proxy_restart", NULL, SW_SHOWNORMAL);
 
 	getchar();

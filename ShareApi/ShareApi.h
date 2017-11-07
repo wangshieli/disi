@@ -57,17 +57,17 @@ using namespace std;
 #endif // BUILD_REG
 
 #ifdef BUILD_PROXY2
-#define VERSION "0.0.5"
+#define VERSION "0.0.6"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Proxy2"
 #endif // BUILD_PROXY2
 
 #ifdef BUILD_CONTROLLER
-#define VERSION "0.1.38"
+#define VERSION "0.1.39"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Controller"
 #endif // BUILD_CONTROLLER
 
 #ifdef BUILD_MONITOR
-#define VERSION "0.0.2"
+#define VERSION "0.0.3"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Monitor"
 #endif // BUILD_MONITOR
 
@@ -79,6 +79,8 @@ using namespace std;
 #ifdef _DEBUG
 #define PROXY_DEBUG
 #endif
+
+#define SHOW_HIDE_EXE 1
 
 #define MY_ALIGN(size, boundary) (((size) + ((boundary) - 1 )) & ~((boundary) - 1))
 

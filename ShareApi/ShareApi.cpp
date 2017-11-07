@@ -826,7 +826,16 @@ unsigned int _stdcall log_thread(LPVOID)
 		case LOG_MESSAGE:
 		{
 			char* pData = (char*)msg.wParam;
-			printf("%s\n", pData);
+			SYSTEMTIME sys;
+			GetLocalTime(&sys);
+			printf("%d-%d-%d %02d:%02d:%02d:%s\n", 
+				sys.wYear, 
+				sys.wMonth, 
+				sys.wDay, 
+				sys.wHour, 
+				sys.wMinute, 
+				sys.wSecond, 
+				pData);
 			free(pData);
 		}
 		break;
