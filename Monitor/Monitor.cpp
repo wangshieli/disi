@@ -147,7 +147,10 @@ int main()
 		}
 
 		if (!bFind)
+		{
+			Sleep(1000 * 2);
 			ShellExecute(0, "open", manage_path, NULL, NULL, SW_SHOWNORMAL);
+		}
 
 	} while (WAIT_OBJECT_0 != WaitForSingleObject(hWaitForExplorer, 1000 * 60 * 2));
 
