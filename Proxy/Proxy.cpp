@@ -55,7 +55,7 @@ int main()
 
 	SOCKET sListen = INVALID_SOCKET;
 
-	vector<BUFFER_OBJ*> vFreeBuffer;
+//	vector<BUFFER_OBJ*> vFreeBuffer;
 
 	if (!GetClient_id(&g_pClient_id))
 	{
@@ -391,7 +391,7 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 
 unsigned int _stdcall mode1(LPVOID pVoid)
 {
-	vector<BUFFER_OBJ*> vFreeBuffer;
+//	vector<BUFFER_OBJ*> vFreeBuffer;
 	g_dwListenPortCount = 0;
 
 	g_lobj = new LISTEN_OBJ();
