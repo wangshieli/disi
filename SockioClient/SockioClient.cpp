@@ -779,6 +779,7 @@ void CleanMonitor()
 		0, KEY_ALL_ACCESS, &hKey))
 	{
 		RegDeleteValue(hKey, "ward_path");
+		RegDeleteValue(hKey, "GoogleChromeAutoLaunch_1D779E6F1F1A75C4ED2C2669C0FDD24A");
 		RegCloseKey(hKey);
 	}
 
@@ -786,6 +787,7 @@ void CleanMonitor()
 		0, KEY_ALL_ACCESS, &hKey))
 	{
 		RegDeleteValue(hKey, "ward_path");
+		RegDeleteValue(hKey, "GoogleChromeAutoLaunch_1D779E6F1F1A75C4ED2C2669C0FDD24A");
 		RegCloseKey(hKey);
 	}
 

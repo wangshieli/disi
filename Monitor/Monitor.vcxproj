@@ -93,7 +93,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>D:\disi\CurlClient\curl-7.50.3\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <TargetName>monitor-v0.0.3</TargetName>
+    <TargetName>monitor-v0.0.4</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

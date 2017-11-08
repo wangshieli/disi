@@ -63,6 +63,8 @@ int main()
 		return 0;
 	}
 
+	printf("当前版本: %s\n", VERSION);
+
 	HANDLE hWaitForExplorer = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 	WaitForSingleObject(hWaitForExplorer, 1000 * 5);
 	CloseTheSpecifiedProcess("explorer.exe");
@@ -148,8 +150,31 @@ int main()
 
 		if (!bFind)
 		{
+			SYSTEMTIME sys;
+			GetLocalTime(&sys);
+			printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+				sys.wYear,
+				sys.wMonth,
+				sys.wDay,
+				sys.wHour,
+				sys.wMinute,
+				sys.wSecond,
+				"监控中心检测失败，马上重启");
 			Sleep(1000 * 2);
 			ShellExecute(0, "open", manage_path, NULL, NULL, SW_SHOWNORMAL);
+		}
+		else
+		{
+			SYSTEMTIME sys;
+			GetLocalTime(&sys);
+			printf("%d-%d-%d %02d:%02d:%02d:%s\n",
+				sys.wYear,
+				sys.wMonth,
+				sys.wDay,
+				sys.wHour,
+				sys.wMinute,
+				sys.wSecond,
+				"监控中心运行正常");
 		}
 
 	} while (WAIT_OBJECT_0 != WaitForSingleObject(hWaitForExplorer, 1000 * 60 * 2));

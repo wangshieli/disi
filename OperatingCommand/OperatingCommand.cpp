@@ -240,14 +240,26 @@ int main(int argc, char* argv[])
 	}
 	else if (strcmp(argv[1], "chrome_check") == 0)
 	{
+		printf("检测chrome是否安装\n");
 		InstallChrome();
 
+		printf("检测代理是否打开\n");
 		if (!CheckTheDimProcess("proxy2-v"))
 		{
 			if (!ProxyRestart())
 			{
 				DowndProxy();
 			}
+		}
+
+		printf("检测chrome是否打开\n");
+		Sleep(1000 * 5);
+		if (!CheckTheSpecifiedProcess("chrome.exe"))
+		{
+			ShellExecute(NULL, "open",
+				"C:\\Program Files\\chrome\\chrome-bin\\chrome.exe",
+				"--user-data-dir=\"C:\\Program Files\\chrome\\userdata\"",
+				NULL, SW_SHOWNORMAL);
 		}
 	}
 

@@ -1066,7 +1066,7 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 			printf("6085ÇëÇóÊý¾Ý: %s\n", pRecv6085Info);
 			free(pRecv6085Info);
 
-			send(sAccept, "ok", 3, 0);
+			send(sAccept, "1", 1, 0);
 
 			WaitForSingleObject(g_hDoingNetWork, INFINITE);
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
