@@ -77,7 +77,10 @@ BOOL DoAdsl()
 		} while (NULL != hLinking && dwWaitTime < 90);
 
 		if (bContinue)
+		{
+			Sleep(1000 * 10);
 			continue;
+		}
 
 		return TRUE;
 	}
