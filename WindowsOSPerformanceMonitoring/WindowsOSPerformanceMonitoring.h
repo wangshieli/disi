@@ -12,7 +12,7 @@ int get_io_bytes(HANDLE hProcess, uint64_t* read_bytes, uint64_t* write_bytes);
 unsigned int _stdcall information_collection(LPVOID pVoid);
 
 //原理：调用GetProcessTimes()，并与上次调用得到的结果相减，即得到某段时间内CPU的使用时间  
-//C++ 获取特定进程规定CPU使用率  原文：http://blog.csdn.net/liuqx97bb/article/details/52058657  
+//C++ 获取特定进程规定CPU使用率 
 class CPUusage {
 private:
 	HANDLE _hProcess;
