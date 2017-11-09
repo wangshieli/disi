@@ -3,9 +3,6 @@
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
 
-/// 获取当前进程的cpu使用率，返回-1失败 
-float get_cpu_usage(HANDLE hProcess);
-
 /// 获取当前进程内存和虚拟内存使用量，返回-1失败，0成功 
 int get_memory_usage(HANDLE hProcess, uint64_t* mem, uint64_t* vmem, uint64_t* qp, uint64_t* qnp);
 
