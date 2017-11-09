@@ -946,16 +946,16 @@ error:
 }
 
 DWORD dwLastRequestTime = 0;
-DWORD dwRequestInterval = 0;
 int CALLBACK AcceptCondition(LPWSABUF lpCallerId, LPWSABUF,
 	LPQOS, LPQOS,
 	LPWSABUF, LPWSABUF,
 	GROUP FAR*, DWORD_PTR dwCallbackData
 )
 {
+
 	DWORD NowTimer = GetTickCount();
-	if ((dwRequestInterval = (NowTimer - dwLastRequestTime)) < 20 * 1000)
-		return CF_ACCEPT;
+	if ((NowTimer - dwLastRequestTime) < 15 * 1000)
+		return CF_REJECT;
 
 	dwLastRequestTime = GetTickCount();
 	return CF_ACCEPT;
@@ -1032,14 +1032,10 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 			if (INVALID_SOCKET == sAccept)
 			{
 				err = WSAGetLastError();
+				if (err == 10061)
+					continue;
 				printf("接收插件连接失败, err = %d\n", err);
 				break;
-			}
-
-			if (dwRequestInterval < 20 * 1000)
-			{
-				send(sAccept, "0", 1, 0);
-				continue;
 			}
 
 			int nRecvLen = 0;
