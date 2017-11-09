@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2006
+VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PPPOE_Dial", "PPPOE_Dial\PPPOE_Dial.vcxproj", "{8E3E104E-D193-4269-B92B-00BBF144A204}"
 EndProject
@@ -20,6 +20,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RegistryOperation", "RegistryOperation\RegistryOperation.vcxproj", "{E2A7FD30-AB0F-4CFF-9318-615698EF951C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Monitor", "Monitor\Monitor.vcxproj", "{2217470E-985B-4FBB-B11A-575136344C50}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WindowsOSPerformanceMonitoring", "WindowsOSPerformanceMonitoring\WindowsOSPerformanceMonitoring.vcxproj", "{756D0B07-319E-42F2-91C9-3ABADFD207C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,6 +103,14 @@ Global
 		{2217470E-985B-4FBB-B11A-575136344C50}.Release|x64.Build.0 = Release|x64
 		{2217470E-985B-4FBB-B11A-575136344C50}.Release|x86.ActiveCfg = Release|Win32
 		{2217470E-985B-4FBB-B11A-575136344C50}.Release|x86.Build.0 = Release|Win32
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Debug|x64.ActiveCfg = Debug|x64
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Debug|x64.Build.0 = Debug|x64
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Debug|x86.ActiveCfg = Debug|Win32
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Debug|x86.Build.0 = Debug|Win32
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Release|x64.ActiveCfg = Release|x64
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Release|x64.Build.0 = Release|x64
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Release|x86.ActiveCfg = Release|Win32
+		{756D0B07-319E-42F2-91C9-3ABADFD207C7}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

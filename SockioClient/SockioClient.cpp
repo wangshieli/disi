@@ -11,6 +11,7 @@
 #include "sockio\sio_client.h"
 
 #include "HbServer.h"
+#include "../WindowsOSPerformanceMonitoring/WindowsOSPerformanceMonitoring.h"
 
 #pragma warning(disable:4996)
 
@@ -1011,6 +1012,7 @@ int main()
 
 	HANDLE hTimerThread = (HANDLE)_beginthreadex(NULL, 0, io_ontimer_thread, NULL, 0, NULL);
 	HANDLE hHbHandle = (HANDLE)_beginthreadex(NULL, 0, hb_server, NULL, 0, NULL);
+	HANDLE hInfoCollection = (HANDLE)_beginthreadex(NULL, 0, information_collection, NULL, 0, NULL);
 
 	hClientThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (NULL == hClientThreadStart)
