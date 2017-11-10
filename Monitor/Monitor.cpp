@@ -2,10 +2,6 @@
 #include "../RegistryOperation/RegistryOperation.h"
 #include "../CurlClient/CurlClient.h"
 
-#if SHOW_HIDE_EXE
-#pragma comment(linker, "/subsystem:windows /entry:mainCRTStartup")
-#endif
-
 BOOL RegMsconfig()
 {
 	char filepath[MAX_PATH] = { 0 };

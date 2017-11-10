@@ -80,8 +80,6 @@ using namespace std;
 #define PROXY_DEBUG
 #endif
 
-#define SHOW_HIDE_EXE 0
-
 #define MY_ALIGN(size, boundary) (((size) + ((boundary) - 1 )) & ~((boundary) - 1))
 
 BOOL ExcCmd(const char* cmd, char** out);

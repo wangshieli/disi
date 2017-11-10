@@ -31,10 +31,6 @@ SOCKET g_6085socket = INVALID_SOCKET;
 
 HANDLE g_hMode2ThreadStart = NULL;
 
-#if SHOW_HIDE_EXE
-#pragma comment(linker, "/subsystem:windows /entry:mainCRTStartup")
-#endif
-
 int main()
 {
 	if (!CheckTheOneInstance())
