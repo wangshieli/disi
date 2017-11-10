@@ -307,7 +307,7 @@ BOOL DeleteDirectoryByFullName(const char* pFilename)
 {
 	char* pCmdRetinfo = NULL;
 	char cCmd[MAX_PATH] = { 0 };
-	sprintf_s(cCmd, "rd /s /q %s", pFilename);
+	sprintf_s(cCmd, "rd /s /q \"%s\"", pFilename);
 	if (!ExcCmd(cCmd, &pCmdRetinfo))
 	{
 		printf("÷¥––√¸¡Ó£∫ %s  ± ß∞‹\n", cCmd);

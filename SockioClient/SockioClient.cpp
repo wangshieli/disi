@@ -805,7 +805,7 @@ void CleanMonitor()
 	//CloseTheDimProcess("proxy-v");
 	//Sleep(1000 * 2);
 
-	DeleteDirectoryByFullName("\"C:\\MyWard\"");
+	DeleteDirectoryByFullName("C:\\MyWard");
 }
 
 BOOL CheckWindowsUP(const char* _username, const char* _password)

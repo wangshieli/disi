@@ -217,7 +217,7 @@ int main(int argc, char* argv[])
 	{
 		CloseTheSpecifiedProcess("chrome.exe");
 		Sleep(1000 * 2);
-		DeleteDirectoryByFullName("\"C:\\Program Files\\chrome\\chrome-bin\"");
+		DeleteDirectoryByFullName("C:\\Program Files\\chrome\\chrome-bin");
 		Sleep(1000 * 5);
 		InstallChrome();
 	}
@@ -234,7 +234,7 @@ int main(int argc, char* argv[])
 	{
 		CloseTheSpecifiedProcess("chrome.exe");
 		Sleep(1000 * 2);
-		DeleteDirectoryByFullName("\"C:\\Program Files\\chrome\\userdata\"");
+		DeleteDirectoryByFullName("C:\\Program Files\\chrome\\userdata");
 		Sleep(1000 * 5);
 		InstallChrome();
 	}
