@@ -1069,7 +1069,10 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 			send(sAccept, "1", 1, 0);
 
 			if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+			{
+				printf("正在进行拨号或者正在检测版本信息，此次请求不拨号\n");
 				continue;
+			}
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 		}
 	} while (true);
