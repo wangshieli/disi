@@ -1068,7 +1068,8 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 
 			send(sAccept, "1", 1, 0);
 
-			WaitForSingleObject(g_hDoingNetWork, INFINITE);
+			if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+				continue;
 			PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 		}
 	} while (true);
