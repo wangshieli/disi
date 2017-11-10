@@ -303,6 +303,7 @@ public:
 	void on_close(client::close_reason const& reason)
 	{
 		cout << "sio closed" << endl;
+		PostThreadMessage(g_client_thread_id, CLIENT_RELINK, NULL, NULL);
 	}
 
 	void on_fail()
