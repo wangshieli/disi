@@ -309,6 +309,7 @@ public:
 	void on_fail()
 	{
 		cout << "sio failed" << endl;
+		PostThreadMessage(g_client_thread_id, CLIENT_RELINK, NULL, NULL);
 	}
 };
 

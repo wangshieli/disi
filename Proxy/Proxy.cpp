@@ -1024,7 +1024,7 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 			}
 			struct sockaddr_in taddr;
 			int len = sizeof(taddr);
-			sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, AcceptCondition, NULL);
+			sAccept = WSAAccept(g_6085socket, (sockaddr*)&taddr, &len, /*AcceptCondition*/NULL, NULL);
 			if (INVALID_SOCKET == sAccept)
 			{
 				err = WSAGetLastError();
@@ -1032,11 +1032,11 @@ unsigned int _stdcall mode_6085(LPVOID pVoid)
 				break;
 			}
 
-			if (dwRequestInterval < 20 * 1000)
-			{
-				send(sAccept, "0", 1, 0);
-				continue;
-			}
+			//if (dwRequestInterval < 20 * 1000)
+			//{
+			//	send(sAccept, "0", 1, 0);
+			//	continue;
+			//}
 
 			int nRecvLen = 0;
 			int nInfoTotalLen = 512;

@@ -57,12 +57,12 @@ using namespace std;
 #endif // BUILD_REG
 
 #ifdef BUILD_PROXY2
-#define VERSION "0.0.8"
+#define VERSION "0.0.9"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Proxy2"
 #endif // BUILD_PROXY2
 
 #ifdef BUILD_CONTROLLER
-#define VERSION "0.1.41"
+#define VERSION "0.1.42"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Controller"
 #endif // BUILD_CONTROLLER
 
