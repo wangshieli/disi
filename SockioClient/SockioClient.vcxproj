@@ -126,7 +126,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;USE_PPPOE_DIAL;BUILD_CONTROLLER;USE_WOPM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,7 +159,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;BUILD_CONTROLLER;USE_PPPOE_DIAL;USE_WOPM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

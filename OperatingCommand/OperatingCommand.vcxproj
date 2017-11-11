@@ -98,16 +98,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\CurlClient\zlib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\disi\CurlClient\zlib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\disi\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\CurlClient\zlib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
     <TargetName>command-v0.0.6</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -122,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;USE_SHARE_API;USE_MODIFY_DNS;BUILDING_LIBCURL;ZLIB_WINAPI;USE_CURL_CLIENT;USE_INSTALL_CHROME;USE_REG_API;BUILD_COMMAND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,7 +154,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;USE_SHARE_API;USE_MODIFY_DNS;BUILDING_LIBCURL;ZLIB_WINAPI;USE_CURL_CLIENT;USE_REG_API;USE_INSTALL_CHROME;BUILD_COMMAND;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\disi\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

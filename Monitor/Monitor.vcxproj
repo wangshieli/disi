@@ -84,14 +84,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\disi\CurlClient\curl-7.50.3\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\CurlClient\curl-7.50.3\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\disi\CurlClient\curl-7.50.3\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\CurlClient\curl-7.50.3\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>monitor-v0.0.4</TargetName>
   </PropertyGroup>
