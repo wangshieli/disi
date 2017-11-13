@@ -4,7 +4,7 @@
 #include <curl\curl.h>
 #include "CurlClient.h"
 
-#pragma comment(lib, "libcurl.lib")
+#pragma comment(lib, "../../ProxyServer/curl-7.50.3/clib/libcurl.lib")
 #pragma comment(lib, "wldap32.lib")
 
 BOOL Curl_POST(const char* pUrl, const char* pData, pCurlWriteFunction pCWFunc, void* pResponseInfo)

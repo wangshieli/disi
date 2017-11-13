@@ -101,16 +101,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\work\ProxyServer\openssl\inc32;D:\work\ProxyServer\socket.io\boost_1_63_0;D:\work\ProxyServer\socket.io\rapidjson-master\include;D:\work\ProxyServer\socket.io\websocketpp-master;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\work\ProxyServer\socket.io\boost_1_63_0\debug\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\..\ProxyServer\openssl\inc32;..\..\ProxyServer\socket.io\boost_1_63_0;..\..\ProxyServer\socket.io\rapidjson-master\include;..\..\ProxyServer\socket.io\websocketpp-master;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\ProxyServer\socket.io\boost_1_63_0\debug\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\work\ProxyServer\socket.io\websocketpp-master;D:\work\ProxyServer\socket.io\rapidjson-master\include;D:\work\ProxyServer\socket.io\boost_1_63_0;D:\work\ProxyServer\openssl\inc32;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\work\ProxyServer\socket.io\boost_1_63_0\release\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\..\ProxyServer\socket.io\websocketpp-master;..\..\ProxyServer\socket.io\rapidjson-master\include;..\..\ProxyServer\socket.io\boost_1_63_0;..\..\ProxyServer\openssl\inc32;$(IncludePath)</IncludePath>
+    <LibraryPath>..\..\ProxyServer\socket.io\boost_1_63_0\release\lib;$(LibraryPath)</LibraryPath>
     <TargetName>controller-v0.1.42</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -126,7 +126,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;USE_PPPOE_DIAL;BUILD_CONTROLLER;USE_WOPM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -159,7 +159,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;SIO_TLS;USE_CURL_CLIENT;USE_SHARE_API;BUILDING_LIBCURL;USE_REG_API;BUILD_CONTROLLER;USE_PPPOE_DIAL;USE_WOPM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\CurlClient\curl-7.50.3\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
