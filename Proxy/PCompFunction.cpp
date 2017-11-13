@@ -144,8 +144,10 @@ void Request_GET(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj, int nlen)
 	char* pSpace = strstr(UrlHost, " ");
 	if (NULL != pSpace)
 	{
-		*pSpace = '\0';
-		nUrlHostLen = pSpace - UrlHost;
+		//*pSpace = '\0';
+		//nUrlHostLen = pSpace - UrlHost;
+		//pUrlEnd = c_bobj->data + nLen + HTTP_TAG_LEN + nUrlHostLen;
+		goto error;
 	}
 
 	char* pUrlPortStartPoint = strstr(UrlHost, ":");
@@ -757,6 +759,13 @@ void GET_ConnectServerFailed(void* _s_sobj, void* _s_bobj)
 	BUFFER_OBJ* s_bobj = (BUFFER_OBJ*)_s_bobj;
 	SOCKET_OBJ* c_sobj = s_sobj->pPairedSObj;
 	BUFFER_OBJ* c_bobj = c_sobj->pRelatedBObj;
+
+#ifdef _DEBUG
+	DWORD dwTranstion = 0;
+	DWORD dwFlags = 0;
+	if (!WSAGetOverlappedResult(s_sobj->sock, &((BUFFER_OBJ*)s_bobj)->ol, &dwTranstion, FALSE, &dwFlags))
+		printf("RecvCompFailed error: %d\n", WSAGetLastError());
+#endif // _DEBUG
 
 	FreeAddrInfo(s_sobj->sAddrInfo);
 
