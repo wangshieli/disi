@@ -298,8 +298,11 @@ void ParsingRequestHeader(SOCKET_OBJ* c_sobj, BUFFER_OBJ* c_bobj)
 	}
 	else
 	{
-		char* p = strstr(c_bobj->data, " ");
-		Request_GET(c_sobj, c_bobj, p - c_bobj->data);
+		PCloseSocket(c_sobj);
+		freeSObj(c_sobj);
+		freeBObj(c_bobj);
+		//char* p = strstr(c_bobj->data, " ");
+		//Request_GET(c_sobj, c_bobj, p - c_bobj->data);
 	}
 }
 
