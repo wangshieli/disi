@@ -518,7 +518,11 @@ void SendReponseSuccess(DWORD dwTranstion, void* _c_sobj, void* _c_bobj)
 	if (c_bobj->dwSendedCount < c_bobj->dwRecvedCount)
 	{
 		if (!PostSend(c_sobj, c_bobj))
+		{
+			PCloseSocket(c_sobj);
+			PCloseSocket(s_sobj);
 			goto error;
+		}
 		return;
 	}
 
