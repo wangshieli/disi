@@ -99,10 +99,7 @@ BOOL InitListenSock(LISTEN_OBJ* lobj, u_short port)
 	laddr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (SOCKET_ERROR == bind(lobj->sListenSock, (SOCKADDR*)&laddr, sizeof(laddr)))
-	{
-		printf("bind failed with error: %d\n", WSAGetLastError());
 		return FALSE;
-	}
 
 	lobj->hPostAcceptExEvent = WSACreateEvent();
 	if (NULL == lobj->hPostAcceptExEvent)

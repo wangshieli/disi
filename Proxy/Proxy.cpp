@@ -21,6 +21,8 @@ unsigned int _stdcall ontimer_thread(void* pVoid);
 
 void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime);
 
+BOOL ProxySelfRestart();
+
 LISTEN_OBJ* g_lobj = NULL;
 LISTEN_OBJ* g_lobj6086 = NULL;
 
@@ -398,7 +400,8 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 	g_nPort = GetListenPort();
 	if (!InitListenSock(g_lobj, g_nPort))
 	{
-		printf("ÉèÖÃ 5005 ¼àÌý¶Ë¿ÚÊ§°Ü\n");
+		if (WSAEADDRINUSE == WSAGetLastError())
+			ProxySelfRestart();
 		goto error;
 	}
 
@@ -410,7 +413,8 @@ unsigned int _stdcall mode1(LPVOID pVoid)
 
 	if (!InitListenSock(g_lobj6086, 6086))
 	{
-		printf("ÉèÖÃ 6086 ¼àÌý¶Ë¿ÚÊ§°Ü\n");
+		if (WSAEADDRINUSE == WSAGetLastError())
+			ProxySelfRestart();
 		goto error;
 	}
 
@@ -517,12 +521,27 @@ void _stdcall ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD 
 void _stdcall ontimer_checknet(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
 	if (!CheckIsNetWorking())
+		goto REDAIL;
+	else
 	{
-		if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+		char CurrentIP[16] = { 0 };
+		if (!GetAdslInfo(CurrentIP))
 			return;
-		
-		PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
+
+		if (0 == strcmp(CurrentIP, "") || 0 == strcmp(CurrentIP, "0.0.0.0"))
+			return;
+
+		if (0 != strcmp(CurrentIP, g_AdslIp))
+			goto REDAIL;
+
+		return;
 	}
+
+REDAIL:
+	if (WaitForSingleObject(g_hDoingNetWork, 0) == WAIT_TIMEOUT)
+		return;
+
+	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
 }
 
 unsigned int _stdcall ontimer_thread(void* pVoid)
