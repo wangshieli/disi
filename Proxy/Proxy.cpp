@@ -31,7 +31,11 @@ SOCKET g_6086socket = INVALID_SOCKET;
 SOCKET g_5005socket = INVALID_SOCKET;
 SOCKET g_6085socket = INVALID_SOCKET;
 
-HANDLE g_hMode2ThreadStart = NULL;
+HANDLE g_hMode6086ThreadStart = NULL;
+BOOL g_bInitSuccess = FALSE;
+
+HANDLE g_h6086Thread = NULL;
+HANDLE g_h5005Thread = NULL;
 
 int main()
 {
@@ -100,7 +104,7 @@ int main()
 	InitializeCriticalSection(&g_csSObj);
 	InitializeCriticalSection(&g_csBObj);
 
-	g_hMode2ThreadStart = CreateEvent(NULL, FALSE, FALSE, NULL);
+	g_hMode6086ThreadStart = CreateEvent(NULL, TRUE, TRUE, NULL);
 	g_h5005Event = CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	g_hDoingNetWork = CreateEvent(NULL, FALSE, TRUE, NULL);
@@ -235,8 +239,6 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 	SetEvent(g_hSwitchThreadStart);
 
 	HANDLE hModeThread = NULL;
-	HANDLE h6086Thread = NULL;
-	HANDLE h5005Thread = NULL;
 	unsigned int nModeThreadId = 0;
 
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -297,20 +299,20 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 				hModeThread = NULL;
 			}
 
-			if (NULL != h6086Thread)
+			if (NULL != g_h6086Thread)
 			{
-				TerminateThread(h6086Thread, 0);
-				WaitForSingleObject(h6086Thread, INFINITE);
-				CloseHandle(h6086Thread);
-				h6086Thread = NULL;
+				TerminateThread(g_h6086Thread, 0);
+				WaitForSingleObject(g_h6086Thread, INFINITE);
+				CloseHandle(g_h6086Thread);
+				g_h6086Thread = NULL;
 			}
 
-			if (NULL != h5005Thread)
+			if (NULL != g_h5005Thread)
 			{
-				TerminateThread(h5005Thread, 0);
-				WaitForSingleObject(h5005Thread, INFINITE);
-				CloseHandle(h5005Thread);
-				h5005Thread = NULL;
+				TerminateThread(g_h5005Thread, 0);
+				WaitForSingleObject(g_h5005Thread, INFINITE);
+				CloseHandle(g_h5005Thread);
+				g_h5005Thread = NULL;
 			}
 
 			printf("线程关闭完成\n");
@@ -361,20 +363,8 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 			hModeThread = (HANDLE)_beginthreadex(NULL, 0, mode2, NULL, 0, &nModeThreadId);
 			if (NULL == hModeThread)
 			{
-				printf("启动 mode2 失败\n");
+				PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, NULL, NULL);
 				break;
-			}
-			WaitForSingleObject(g_hMode2ThreadStart, INFINITE);
-			h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_6086, NULL, 0, NULL);
-			if (NULL == h6086Thread)
-			{
-				printf("启动 mode2_6086 失败\n");
-			}
-			WaitForSingleObject(g_hMode2ThreadStart, INFINITE);
-			h5005Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_5005, NULL, 0, NULL);
-			if (NULL == h5005Thread)
-			{
-				printf("启动 mode2_5005 失败\n");
 			}
 		}
 		break;
@@ -767,7 +757,14 @@ unsigned int _stdcall mode2(LPVOID pVoid)
 		break;
 	}
 
-	SetEvent(g_hMode2ThreadStart);
+	ResetEvent(g_hMode6086ThreadStart);
+	g_h6086Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_6086, NULL, 0, NULL);
+	if (NULL == g_h6086Thread)
+		goto error;
+
+	WaitForSingleObject(g_hMode6086ThreadStart, INFINITE);
+	if (!g_bInitSuccess)
+		return 0;
 
 	while (true)
 	{
@@ -841,14 +838,12 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	}
 	free(pSendBuf);
 
+	g_h5005Thread = (HANDLE)_beginthreadex(NULL, 0, mode2_5005, NULL, 0, NULL);
+
+	g_bInitSuccess = TRUE;
+	SetEvent(g_hMode6086ThreadStart);
+
 	SetEvent(hReportStartEvent);
-	//if (WaitForSingleObject(hReportCompEvent, INFINITE) != WAIT_OBJECT_0)
-	//{
-	//	printf("WaitForSingleObject hReportCompEvent error: %d\n", GetLastError());
-	//	goto error;
-	//}
-	//printf("上报完成\n");
-	SetEvent(g_hMode2ThreadStart);
 
 	int nRecvLen = 0;
 	int nInfoTotalLen = 1024;
@@ -908,6 +903,8 @@ unsigned int _stdcall mode2_6086(LPVOID pVoid)
 	free(pRecv6086Info);
 
 error:
+	g_bInitSuccess = FALSE;
+	SetEvent(g_hMode6086ThreadStart);
 	WaitForSingleObject(g_hDoingNetWork, INFINITE);
 	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return 0;
@@ -955,8 +952,8 @@ unsigned int _stdcall mode2_5005(LPVOID pVoid)
 	} while (WaitForSingleObject(g_h5005Event, 1000 * 2) == WAIT_TIMEOUT);
 
 error:
-	WaitForSingleObject(g_hDoingNetWork, INFINITE);
-	PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
+	//WaitForSingleObject(g_hDoingNetWork, INFINITE);
+	//PostThreadMessage(g_switch_threadId, SWITCH_REDIAL, 0, 0);
 	return 0;
 }
 
