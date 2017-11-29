@@ -58,47 +58,32 @@ BOOL DoAdsl()
 			hLinking = FindWindow(NULL, "正在连接 adsl...");
 			if (NULL == hLinking)
 			{
+				if (FindRasphone())
+				{
+					bContinue = TRUE;
+					break;
+				}
+
 				char checkip[16] = { 0 };
 				if (GetAdslInfo(checkip))
 				{
 					bContinue = FALSE;
 					break;
 				}
-
-				HWND hErrorWnd = NULL;
-				hErrorWnd = FindWindow(NULL, "连接到 adsl 时出错");
-				if (NULL != hErrorWnd)
-				{
-					HWND hButton = ::FindWindowEx(hErrorWnd, NULL, "Button", "取消");
-					::SendMessage(hButton, BM_CLICK, 0, 0);
-					::SendMessage(hButton, BM_CLICK, 0, 0);
-					bContinue = TRUE;
-					break;
-				}
-
-				Error756();
-
-				if (FindRasphone())
-				{
-					bContinue = TRUE;
-					break;
-				}
 			}
-			else
+
+			HWND hErrorWnd = NULL;
+			hErrorWnd = FindWindow(NULL, "连接到 adsl 时出错");
+			if (NULL != hErrorWnd)
 			{
-				HWND hErrorWnd = NULL;
-				hErrorWnd = FindWindow(NULL, "连接到 adsl 时出错");
-				if (NULL != hErrorWnd)
-				{
-					HWND hButton = ::FindWindowEx(hErrorWnd, NULL, "Button", "取消");
-					::SendMessage(hButton, BM_CLICK, 0, 0);
-					::SendMessage(hButton, BM_CLICK, 0, 0);
-					bContinue = TRUE;
-					break;
-				}
-
-				Error756();
+				HWND hButton = ::FindWindowEx(hErrorWnd, NULL, "Button", "取消");
+				::SendMessage(hButton, BM_CLICK, 0, 0);
+				::SendMessage(hButton, BM_CLICK, 0, 0);
+				bContinue = TRUE;
+				break;
 			}
+
+			Error756();
 		} while (NULL != hLinking && dwWaitTime < 120);
 
 		if (bContinue)
