@@ -141,6 +141,9 @@ BOOL ProxyRestart()
 	char FileName[_MAX_FNAME] = { 0 };
 	_splitpath_s(proxy_path, NULL, 0, NULL, 0, FileName, _MAX_FNAME, NULL, 0);
 	strcat_s(FileName, ".exe");
+
+	CloseTheSpecifiedExeErrorWnd(FileName);
+
 	CloseTheSpecifiedProcess(FileName);
 	Sleep(1000 * 2);
 

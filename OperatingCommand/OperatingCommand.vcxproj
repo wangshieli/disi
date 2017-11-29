@@ -100,6 +100,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\CurlClient\zlib\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
+    <TargetName>command-v0.0.7</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -108,7 +109,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\CurlClient\zlib\include;$(IncludePath)</IncludePath>
     <LibraryPath>..\CurlClient\zlib\lib;$(LibraryPath)</LibraryPath>
-    <TargetName>command-v0.0.6</TargetName>
+    <TargetName>command-v0.0.7</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

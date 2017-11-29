@@ -57,22 +57,22 @@ using namespace std;
 #endif // BUILD_REG
 
 #ifdef BUILD_PROXY2
-#define VERSION "0.0.11"
+#define VERSION "0.0.12"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Proxy2"
 #endif // BUILD_PROXY2
 
 #ifdef BUILD_CONTROLLER
-#define VERSION "0.1.42"
+#define VERSION "0.1.43"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Controller"
 #endif // BUILD_CONTROLLER
 
 #ifdef BUILD_MONITOR
-#define VERSION "0.0.4"
+#define VERSION "0.0.5"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Monitor"
 #endif // BUILD_MONITOR
 
 #ifdef BUILD_COMMAND
-#define VERSION "0.0.6"
+#define VERSION "0.0.7"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Command"
 #endif // BUILD_COMMAND
 
@@ -131,6 +131,12 @@ unsigned int _stdcall log_thread(LPVOID);
 void ShowLog(const char* pData, int len);
 
 ADDRINFOT* ResolveIp(const char* _host, const char* _port);
+
+void CloseTheSpecifiedWnd(const char* WndName, const char* BtnName);
+
+void CloseTheSpecifiedExeErrorWnd(const char* ExeName);
+
+void Error756();
 
 extern HANDLE hTheOneInstance;
 extern char g_username[];

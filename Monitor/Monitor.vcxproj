@@ -85,6 +85,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;$(IncludePath)</IncludePath>
+    <TargetName>monitor-v0.0.5</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -93,7 +94,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <TargetName>monitor-v0.0.4</TargetName>
+    <TargetName>monitor-v0.0.5</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

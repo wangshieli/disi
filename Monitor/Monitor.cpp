@@ -115,7 +115,7 @@ int main()
 			{
 				printf("连接 管理中心6083端口 失败 error = %d\n", WSAGetLastError());
 				//continue;
-				CloseTheSpecifiedProcess(FileName);
+				//CloseTheSpecifiedProcess(FileName);
 				bFind = FALSE;
 			}
 			else
@@ -126,7 +126,7 @@ int main()
 
 				if (SOCKET_ERROR == send(sock, "areyouok\r\n\r\n", strlen("areyouok\r\n\r\n") + 1, 0))
 				{
-					CloseTheSpecifiedProcess(FileName);
+					//CloseTheSpecifiedProcess(FileName);
 					bFind = FALSE;
 				}
 				else
@@ -135,7 +135,7 @@ int main()
 					err = recv(sock, brecv, 32, 0);
 					if (SOCKET_ERROR == err || 0 == err)
 					{
-						CloseTheSpecifiedProcess(FileName);
+						//CloseTheSpecifiedProcess(FileName);
 						bFind = FALSE;
 					}
 				}
@@ -156,6 +156,10 @@ int main()
 				sys.wMinute,
 				sys.wSecond,
 				"监控中心检测失败，马上重启");
+
+			CloseTheSpecifiedExeErrorWnd(FileName);
+			CloseTheSpecifiedProcess(FileName);
+
 			Sleep(1000 * 2);
 			ShellExecute(0, "open", manage_path, NULL, NULL, SW_SHOWNORMAL);
 		}

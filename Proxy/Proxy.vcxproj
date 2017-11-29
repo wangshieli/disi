@@ -74,13 +74,14 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
+    <TargetName>proxy2-v0.0.12</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>proxy2-v0.0.11</TargetName>
+    <TargetName>proxy2-v0.0.12</TargetName>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

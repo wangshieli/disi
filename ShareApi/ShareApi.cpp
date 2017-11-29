@@ -877,9 +877,72 @@ ADDRINFOT* ResolveIp(const char* _host, const char* _port)
 	return res;
 }
 
+void CloseTheSpecifiedWnd(const char* WndName, const char* BtnName)
+{
+	HWND hErrorWnd = ::FindWindow("#32770", WndName);
+	if (NULL != hErrorWnd)
+	{
+		do
+		{
+			HWND hButton = FindWindowEx(hErrorWnd, NULL, "Button", BtnName);
+			if (NULL != hButton)
+			{
+				::SendMessage(hButton, BM_CLICK, 0, 0);
+				::SendMessage(hButton, BM_CLICK, 0, 0);
+			}
+			Sleep(1000 * 2);
+			hErrorWnd = ::FindWindow("#32770", WndName);
+		} while (NULL != hErrorWnd);
+	}
+}
+
+void CloseTheSpecifiedExeErrorWnd(const char* ExeName)
+{
+	CloseTheSpecifiedWnd(ExeName, "不发送(&D)");
+
+	char ErrorWndName[_MAX_FNAME];
+	sprintf_s(ErrorWndName, "%s - 应用程序错误", ExeName);
+	CloseTheSpecifiedWnd(ErrorWndName, "确定");
+}
+
+void Error756()
+{
+	HWND hNetLink = ::FindWindow("#32770", "网络连接");
+	while (NULL != hNetLink)
+	{
+		HWND hStatic = ::FindWindowEx(hNetLink, NULL, "Static", NULL);
+		while (NULL != hStatic)
+		{
+			char cTitle[MAX_PATH] = { 0 };
+			GetWindowText(hStatic, cTitle, MAX_PATH);
+			printf("%s\n", cTitle);
+			if (strstr(cTitle, "错误 756") != NULL)
+			{
+				Sleep(1000 * 60 * 2);
+				ComputerRestart();
+				return;
+			}
+			hStatic = ::FindWindowEx(hNetLink, hStatic, "Static", NULL);
+		}
+
+		HWND hButton = ::FindWindowEx(hNetLink, NULL, "Button", "确定");
+
+		hNetLink = ::FindWindowEx(NULL, hNetLink, "#32770", "网络连接");
+
+		if (NULL != hButton)
+		{
+			::SendMessage(hButton, BM_CLICK, 0, 0);
+			::SendMessage(hButton, BM_CLICK, 0, 0);
+		}
+	} 
+}
+
 #ifndef USE_SHARE_API
 int main()
 {
+	Error756();
+	DWORD dw = GetTickCount();
+	printf("%d", dw);
 	getchar();
 	return 0;
 }
