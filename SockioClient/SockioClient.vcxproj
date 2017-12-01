@@ -103,7 +103,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\..\ProxyServer\openssl\inc32;..\..\ProxyServer\socket.io\boost_1_63_0;..\..\ProxyServer\socket.io\rapidjson-master\include;..\..\ProxyServer\socket.io\websocketpp-master;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\ProxyServer\socket.io\boost_1_63_0\debug\lib;$(LibraryPath)</LibraryPath>
-    <TargetName>controller-v0.1.43</TargetName>
+    <TargetName>controller-v0.1.44</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -112,7 +112,7 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\..\ProxyServer\curl-7.50.3\include;..\..\ProxyServer\socket.io\websocketpp-master;..\..\ProxyServer\socket.io\rapidjson-master\include;..\..\ProxyServer\socket.io\boost_1_63_0;..\..\ProxyServer\openssl\inc32;$(IncludePath)</IncludePath>
     <LibraryPath>..\..\ProxyServer\socket.io\boost_1_63_0\release\lib;$(LibraryPath)</LibraryPath>
-    <TargetName>controller-v0.1.43</TargetName>
+    <TargetName>controller-v0.1.44</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

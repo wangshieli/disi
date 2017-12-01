@@ -43,7 +43,7 @@ BOOL CheckMd5(const char* pFilePath, const char* pMd5);
 BOOL doDownLoad(const char* path, const char* pUrl, const char* pMd5);
 
 // pModeName = proxy2.exe monitor.exe controller.exe
-BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeName);
+BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeName, BOOL bCheckMd5 = FALSE);
 
 BOOL ProcessAutoUpdate(const char* pCode, const char* pModeName, const char* pUpgradeName);
 

@@ -101,7 +101,8 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	char pFilePath[MAX_PATH];
 	sprintf_s(pFilePath, "%s\\command-v%s.exe", CommandFiler, Version);
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[2], "version")->valuestring;
-	if (CompareVersion(Version, pVersion) && _access(pFilePath, 0) == 0)
+	char* pMd5 = cJSON_GetObjectItem(pAppInfo[2], "ext_md5")->valuestring;
+	if (CompareVersion(Version, pVersion) && _access(pFilePath, 0) == 0 && CheckMd5(pFilePath, pMd5))
 	{
 		printf("pworkunit不需要更新\n");
 		RegCloseKey(hKey);
@@ -111,7 +112,6 @@ BOOL PWorkUnit(cJSON** pAppInfo)
 	if (_access(CommandFiler, 0) != 0)
 		CreateDirectory(CommandFiler, NULL);
 
-	char* pMd5 = cJSON_GetObjectItem(pAppInfo[2], "ext_md5")->valuestring;
 	char* pDUrl = cJSON_GetObjectItem(pAppInfo[2], "update_url")->valuestring;
 	char FormatDownUrl[MAX_PATH] = { 0 };
 	UrlFormating(pDUrl, "\\", FormatDownUrl);
@@ -165,6 +165,8 @@ BOOL PMonitor(cJSON** pAppInfo)
 	printf("monitor.exe 更新完成\n");
 	return TRUE;
 }
+
+BOOL bTimerOn = FALSE;
 
 void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWORD dwTime)
 {
@@ -257,7 +259,7 @@ void _stdcall io_ontimer_checkversion(HWND hwnd, UINT message, UINT idTimer, DWO
 		goto error;
 	}
 
-	if (!AutoUpdate(app_info, "controller.exe", "upgrade_controller.exe"))
+	if (!AutoUpdate(app_info, "controller.exe", "upgrade_controller.exe", !bTimerOn))
 	{
 		printf("升级controller程序失败\n");
 		goto error;
@@ -980,6 +982,7 @@ int main()
 	}
 	
 	io_ontimer_checkversion(0, 0, 0, 0);
+	bTimerOn = TRUE;
 
 	HKEY hKey = NULL;
 	if (!PRegCreateKey(CommandExecute, &hKey))
@@ -1037,15 +1040,17 @@ int main()
 		HKEY hKey = NULL;
 		PRegCreateKey(SMonitor, &hKey);
 		char pFilePath[MAX_PATH];
-		GetRegValue(hKey, "path", pFilePath);
+		BOOL bSuccess = GetRegValue(hKey, "path", pFilePath);
 		RegCloseKey(hKey);
-		ShellExecute(0, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
+		if (bSuccess)
+			ShellExecute(NULL, "open", pFilePath, NULL, NULL, SW_SHOWNORMAL);
 	}
 
 	// chrome_check
 	//if(!CheckTheDimProcess("proxy2-v"))
 	ShellExecute(NULL, "open", CommandPath, "chrome_check", NULL, SW_SHOWNORMAL);
 
-	getchar();
+	WaitForSingleObject(hClientThreadStart, INFINITE);
+//	getchar();
 	return 0;
 }

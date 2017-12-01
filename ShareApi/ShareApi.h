@@ -62,7 +62,7 @@ using namespace std;
 #endif // BUILD_PROXY2
 
 #ifdef BUILD_CONTROLLER
-#define VERSION "0.1.43"
+#define VERSION "0.1.44"
 #define NP_THE_ONE_INSTANCE "Global\\np_The_One_Instance_Event_Controller"
 #endif // BUILD_CONTROLLER
 

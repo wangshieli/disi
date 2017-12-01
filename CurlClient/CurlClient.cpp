@@ -328,11 +328,21 @@ BOOL CheckProxyIsNetworking(const char* ProxyIp, u_short ProxyPort)
 	return TRUE;
 }
 
-BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeName)
+BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeName, BOOL bCheckMd5)
 {
 	char* pVersion = cJSON_GetObjectItem(pAppInfo[0], "version")->valuestring;
+	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
+	
 	if (CompareVersion(VERSION, pVersion))
-		return TRUE;
+	{
+		if (!bCheckMd5)
+			return TRUE;
+
+		char filepath[MAX_PATH] = { 0 };
+		GetModuleFileName(NULL, filepath, MAX_PATH);
+		if (CheckMd5(filepath, pProxyMd5))
+			return TRUE;
+	}
 
 	char szProxyPath[MAX_PATH];
 	char szUpgradePath[MAX_PATH];
@@ -351,7 +361,6 @@ BOOL AutoUpdate(cJSON** pAppInfo, const char* pModeName, const char* pUpgradeNam
 	UrlFormating(pUpgradeUrl, "\\", szUpgradeUrl);
 	UrlFormating(pProxyUrl, "\\", szProxyUrl);
 
-	char* pProxyMd5 = cJSON_GetObjectItem(pAppInfo[0], "ext_md5")->valuestring;
 	char* pUpgradeMd5 = cJSON_GetObjectItem(pAppInfo[1], "ext_md5")->valuestring;
 	if (NULL == pProxyMd5 || NULL == pUpgradeMd5)
 		return FALSE;
