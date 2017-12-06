@@ -293,24 +293,32 @@ unsigned int _stdcall switch_thread(LPVOID pVoid)
 
 			if (NULL != hModeThread)
 			{
-				TerminateThread(hModeThread, 0);
-				WaitForSingleObject(hModeThread, INFINITE);
+				if (bSwithMode1)
+				{
+					TerminateThread(hModeThread, 0);
+					WaitForSingleObject(hModeThread, INFINITE);
+				}
+				else
+				{
+					if (WaitForSingleObject(hModeThread, 1000 * 3) == WAIT_TIMEOUT)
+						TerminateThread(hModeThread, 0);
+				}
 				CloseHandle(hModeThread);
 				hModeThread = NULL;
 			}
 
 			if (NULL != g_h6086Thread)
 			{
-				TerminateThread(g_h6086Thread, 0);
-				WaitForSingleObject(g_h6086Thread, INFINITE);
+				if (WaitForSingleObject(g_h6086Thread, 1000 * 2) == WAIT_TIMEOUT)
+					TerminateThread(g_h6086Thread, 0);
 				CloseHandle(g_h6086Thread);
 				g_h6086Thread = NULL;
 			}
 
 			if (NULL != g_h5005Thread)
 			{
-				TerminateThread(g_h5005Thread, 0);
-				WaitForSingleObject(g_h5005Thread, INFINITE);
+				if (WaitForSingleObject(g_h5005Thread, 1000 * 2) == WAIT_TIMEOUT)
+					TerminateThread(g_h5005Thread, 0);
 				CloseHandle(g_h5005Thread);
 				g_h5005Thread = NULL;
 			}
