@@ -4,7 +4,7 @@
 #include "../PPPOE_Dial/PPPOEDial.h"
 #include "../CurlClient/CurlClient.h"
 #include "../RegistryOperation/RegistryOperation.h"
-1
+
 HANDLE hCompPort = NULL;
 DWORD g_dwPageSize = 0;
 
